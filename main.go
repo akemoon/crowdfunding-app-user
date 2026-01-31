@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	migrationsDir = "app/migrations/postgres"
+	migrationsDir = "/app/migrations/postgres"
 
 	envPostgresDSN = "POSTGRES_DSN"
 )
