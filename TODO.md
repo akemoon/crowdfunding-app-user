@@ -1,8 +1,8 @@
 ## main
 
-[ ] graphql
-[ ] configure prometheus
+- [ ] graphql
+- [ ] configure prometheus
 
 ## additional
 
-[ ] s3 for pictures
+- [ ] s3 for pictures
