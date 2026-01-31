@@ -1,0 +1,136 @@
+definitions:
+  domain.CreateUserReq:
+    properties:
+      username:
+        type: string
+    type: object
+  domain.CreateUserResp:
+    properties:
+      userID:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.ErrResp:
+    properties:
+      details:
+        type: string
+      error:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: User Service API for a Crowdfunding App.
+  title: User Service API
+  version: "1.0"
+paths:
+  /user:
+    post:
+      consumes:
+      - application/json
+      description: Create a user with the given payload
+      parameters:
+      - description: Create user request payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateUserReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created
+          schema:
+            $ref: '#/definitions/domain.CreateUserResp'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+        "405":
+          description: Method not allowed
+          schema:
+            type: string
+        "409":
+          description: Username conflict
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+      summary: Create a user
+  /user/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Get user info by username
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/domain.User'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+        "405":
+          description: Method not allowed
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+      summary: Get user by username
+  /user/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user info by user ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Invalid user ID format
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+        "405":
+          description: Method not allowed
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrResp'
+      summary: Get user by ID
+swagger: "2.0"
