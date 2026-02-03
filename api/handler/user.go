@@ -67,7 +67,8 @@ func GetUserByID(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		id, err := parseUserID(r)
+		idStr := r.PathValue("id")
+		id, err := parseUserID(idStr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
@@ -113,9 +114,44 @@ func GetUserByUsername(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-func parseUserID(r *http.Request) (uuid.UUID, error) {
-	idStr := r.PathValue("id")
+// @Summary Get current user
+// @Description Get user info by X-User-ID header
+// @Accept json
+// @Produce json
+// @Param X-User-ID header string true "User ID (UUID)"
+// @Success 200 {object} domain.User "User information"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {object} ErrResp "User not found"
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} ErrResp "Internal server error"
+// @Router /user/me [get]
+func GetMe(svc *user.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 
+		idStr := r.Header.Get("X-User-ID")
+		if idStr == "" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		id, err := parseUserID(idStr)
+
+		user, err := svc.GetUserByID(r.Context(), id)
+		if err != nil {
+			status, errResp := MapErrToHTTP(err)
+			writeWithJson(w, status, errResp)
+			return
+		}
+
+		writeWithJson(w, http.StatusOK, user)
+	}
+}
+
+func parseUserID(idStr string) (uuid.UUID, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("invalid user id %s", idStr)

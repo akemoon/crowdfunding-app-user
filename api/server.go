@@ -27,6 +27,7 @@ func (s *Server) AddUserHandlers(svc *user.Service) {
 	s.r.HandleFunc("POST /user", handler.CreateUser(svc))
 	s.r.HandleFunc("GET /user/id/{id}", handler.GetUserByID(svc))
 	s.r.HandleFunc("GET /user/{username}", handler.GetUserByUsername(svc))
+	s.r.HandleFunc("GET /user/me", handler.GetMe(svc))
 }
 
 func (s *Server) AddSwaggerUI() {
