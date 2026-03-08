@@ -11,11 +11,11 @@ values
     ('00000000-0000-7000-8000-000000000003', 'cyril.test@example.com', '$2a$10$NiFFvrsWP0kiScpC1j3unO2iSdvva9BsqfV6JCP5dYyEyQwlnwb4u')
 on conflict do nothing;
 
-insert into users (id, username, display_name, description)
+insert into users (id, username, display_name, description, avatar_key)
 values
-    ('00000000-0000-7000-8000-000000000001', 'alice-test', 'Alice Test', 'Test account for local development'),
-    ('00000000-0000-7000-8000-000000000002', 'boris99', 'Борис Тест', 'Test account for local development'),
-    ('00000000-0000-7000-8000-000000000003', 'cyril-dev', 'Cyril Dev', 'Test account for local development')
+    ('00000000-0000-7000-8000-000000000001', 'alice-test', 'Alice Test', 'Test account for local development', ''),
+    ('00000000-0000-7000-8000-000000000002', 'boris99', 'Борис Тест', 'Test account for local development', ''),
+    ('00000000-0000-7000-8000-000000000003', 'cyril-dev', 'Cyril Dev', 'Test account for local development', '')
 on conflict do nothing;
 
 -- +goose Down

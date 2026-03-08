@@ -11,16 +11,54 @@ create table if not exists credentials
     constraint credentials_email_unique unique (email)
 );
 
+create table if not exists default_avatars
+(
+    id  smallserial primary key,
+    key text not null,
+
+    constraint default_avatars_key_unique unique (key)
+);
+
+insert into default_avatars (key) values
+    ('defaults/avatar-1.png'),
+    ('defaults/avatar-2.png'),
+    ('defaults/avatar-3.png'),
+    ('defaults/avatar-4.png'),
+    ('defaults/avatar-5.png'),
+    ('defaults/avatar-6.png');
+
 create table if not exists users
 (
-    id           uuid primary key,
-    username     text not null,
-    display_name text,
-    description  text,
-    created_at   timestamptz not null default now(),
+    id                uuid primary key,
+    username          text not null,
+    display_name      text,
+    description       text,
+    avatar_key        text,
+    default_avatar_id smallint not null,
+    created_at        timestamptz not null default now(),
 
-    constraint users_username_unique unique (username)
+    constraint users_username_unique unique (username),
+    constraint users_default_avatar_fk foreign key (default_avatar_id) references default_avatars(id)
 );
+
+-- +goose StatementBegin
+create or replace function assign_default_avatar()
+returns trigger as $$
+begin
+    select id into new.default_avatar_id
+    from default_avatars
+    order by random()
+    limit 1;
+
+    return new;
+end;
+$$ language plpgsql;
+-- +goose StatementEnd
+
+create trigger trigger_assign_default_avatar
+    before insert on users
+    for each row
+    execute function assign_default_avatar();
 
 create table if not exists follows
 (
@@ -37,5 +75,8 @@ create table if not exists follows
 -- +goose Down
 
 drop table if exists follows;
+drop trigger if exists trigger_assign_default_avatar on users;
+drop function if exists assign_default_avatar;
 drop table if exists users;
+drop table if exists default_avatars;
 drop table if exists credentials;
