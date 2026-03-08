@@ -1,0 +1,118 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log"
+
+	tokenRepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/token/redis"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher/bcrypt"
+	"github.com/akemoon/crowdfunding-app-user/modules/user/repo/user/postgres"
+	"github.com/akemoon/crowdfunding-app-user/modules/user/service/user"
+	"github.com/akemoon/crowdfunding-app-user/platform/http"
+	platformRedis "github.com/akemoon/crowdfunding-app-user/platform/redis"
+	pgLib "github.com/akemoon/golib/postgres"
+	"github.com/redis/go-redis/v9"
+)
+
+const defaultHTTPAddr = ":80"
+
+type AppConfig struct {
+	PostgresURL           string
+	PostgresMigrationsDir string
+	RedisURL              string
+	JWTSecret             string
+}
+
+type App struct {
+	ctx context.Context
+
+	config AppConfig
+
+	db *sql.DB
+
+	redisClient *redis.Client
+
+	authSvc *auth.Service
+
+	userSvc *user.Service
+
+	server http.Server
+}
+
+func NewApp(ctx context.Context, config AppConfig) *App {
+	return &App{
+		ctx:    ctx,
+		config: config,
+	}
+}
+
+func (a *App) InitDB() error {
+	var err error
+
+	a.db, err = pgLib.Connect(a.ctx, a.config.PostgresURL)
+	if err != nil {
+		return fmt.Errorf("postgres connection: %w", err)
+	}
+
+	err = pgLib.Migrate(a.ctx, a.db, a.config.PostgresMigrationsDir)
+	if err != nil {
+		return fmt.Errorf("postgres migration: %w", err)
+	}
+
+	a.redisClient, err = platformRedis.NewClient(a.ctx, a.config.RedisURL)
+	if err != nil {
+		return fmt.Errorf("redis connection: %w", err)
+	}
+
+	return nil
+}
+
+func (a *App) InitServices() {
+	repo := postgres.NewUserRepo(a.db)
+
+	tokenRepo := tokenRepo.NewRefreshTokenRepo(a.redisClient)
+	tokenSvc := token.NewService(tokenRepo, a.config.JWTSecret)
+
+	// TODO: change cost
+	hasher := bcrypt.NewHasher(0)
+
+	a.authSvc = auth.NewService(repo, hasher, tokenSvc)
+
+	a.userSvc = user.NewService(repo)
+}
+
+func (a *App) InitServer() {
+	a.server = *http.NewServer()
+	a.server.AddAuthHandlers(a.authSvc)
+	a.server.AddUserHandlers(a.userSvc)
+	a.server.AddSwaggerUI()
+	a.server.AddMetrics()
+}
+
+func (a *App) Init() error {
+	err := a.InitDB()
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+
+	a.InitServices()
+
+	a.InitServer()
+
+	return nil
+}
+
+func (a *App) Run() error {
+	log.Printf("http server listening on %s", defaultHTTPAddr)
+
+	err := a.server.ListenAndServe(defaultHTTPAddr)
+	if err != nil {
+		return fmt.Errorf("start server: %w", err)
+	}
+
+	return nil
+}

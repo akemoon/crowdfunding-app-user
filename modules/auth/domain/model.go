@@ -1,0 +1,64 @@
+package domain
+
+type SignUpReq struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type SignInReq struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type SignInResp struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+type SignOutReq struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+const (
+	MinPasswordLength = 12
+	MaxPasswordLength = 64
+)
+
+func ValidatePassword(password string) error {
+	if len(password) < MinPasswordLength {
+		return ErrInvalidPassword
+	}
+	if len(password) > MaxPasswordLength {
+		return ErrInvalidPassword
+	}
+
+	// NOTE: NIST recommends length over complexity, but classic rules also kept
+	// https://pages.nist.gov/800-63-4/sp800-63b.html
+	//
+	var hasLower, hasUpper, hasDigit bool
+
+	for i := 0; i < len(password); i++ {
+		c := password[i]
+
+		// Only ASCII
+		if c < ' ' || c > '~' {
+			return ErrInvalidPassword
+		}
+
+		switch {
+		case c >= 'a' && c <= 'z':
+			hasLower = true
+		case c >= 'A' && c <= 'Z':
+			hasUpper = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		}
+	}
+
+	if !hasLower || !hasUpper || !hasDigit {
+		return ErrInvalidPassword
+	}
+
+	return nil
+}
