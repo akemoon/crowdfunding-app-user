@@ -14,6 +14,8 @@ const (
 	envRedisURL              = "REDIS_URL"
 	envJWTSecret             = "JWT_SECRET"
 	envAvatarsBaseURL        = "AVATARS_BASE_URL"
+	envKafkaBrokers          = "KAFKA_BROKERS"
+	envUserTopic             = "USER_TOPIC"
 )
 
 // @title User service API
@@ -38,6 +40,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("run app: %v", err)
 	}
+}
+
+func parseBrokers(value string) []string {
+	parts := strings.Split(value, ",")
+	brokers := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			brokers = append(brokers, t)
+		}
+	}
+	return brokers
 }
 
 func getRequiredEnv(key string) (string, error) {
@@ -74,11 +87,24 @@ func loadConfigFromEnv() (AppConfig, error) {
 		return AppConfig{}, err
 	}
 
+	brokersVal, err := getRequiredEnv(envKafkaBrokers)
+	if err != nil {
+		return AppConfig{}, err
+	}
+	brokers := parseBrokers(brokersVal)
+
+	userTopic, err := getRequiredEnv(envUserTopic)
+	if err != nil {
+		return AppConfig{}, err
+	}
+
 	return AppConfig{
 		PostgresURL:           postgresURL,
 		PostgresMigrationsDir: migrationsDir,
 		RedisURL:              redisURL,
 		JWTSecret:             jwtSecret,
 		AvatarsBaseURL:        avatarsBaseURL,
+		KafkaBrokers:          brokers,
+		UserTopic:             userTopic,
 	}, nil
 }

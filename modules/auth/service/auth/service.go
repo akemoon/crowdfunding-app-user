@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log"
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
 	"github.com/akemoon/crowdfunding-app-user/lib/validation"
@@ -10,19 +11,23 @@ import (
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/repo/user"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher"
+	userPublisher "github.com/akemoon/crowdfunding-app-user/publisher/user"
+	"github.com/google/uuid"
 )
 
 type Service struct {
-	userRepo user.Repo
-	hasher   hasher.Hasher
-	tokenSvc *token.Service // TODO: interface
+	userRepo  user.Repo
+	hasher    hasher.Hasher
+	tokenSvc  *token.Service // TODO: interface
+	publisher *userPublisher.Publisher
 }
 
-func NewService(r user.Repo, h hasher.Hasher, t *token.Service) *Service {
+func NewService(r user.Repo, h hasher.Hasher, t *token.Service, p *userPublisher.Publisher) *Service {
 	return &Service{
-		userRepo: r,
-		hasher:   h,
-		tokenSvc: t,
+		userRepo:  r,
+		hasher:    h,
+		tokenSvc:  t,
+		publisher: p,
 	}
 }
 
@@ -47,13 +52,23 @@ func (s *Service) SignUp(ctx context.Context, req domain.SignUpReq) error {
 		return err
 	}
 
-	err = s.userRepo.CreateUser(ctx, lib.CreateUserReq{
+	userID, err := s.userRepo.CreateUser(ctx, lib.CreateUserReq{
 		Email:        req.Email,
 		Username:     req.Username,
 		PasswordHash: passwordHash,
 	})
 	if err != nil {
 		return fmt.Errorf("repo: %w", err)
+	}
+
+	// TODO: outbox pattern to guarantee delivery
+	event := userPublisher.Event{
+		EventID: uuid.New(),
+		Type:    userPublisher.EventTypeRegistered,
+		UserID:  userID,
+	}
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		log.Printf("auth: publish user registered event: %v", err)
 	}
 
 	return nil

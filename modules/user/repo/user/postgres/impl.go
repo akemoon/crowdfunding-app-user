@@ -56,10 +56,10 @@ var createCredentialsSQL string
 //go:embed sql/create_user.sql
 var createUserSQL string
 
-func (r *UserRepo) CreateUser(ctx context.Context, req lib.CreateUserReq) error {
+func (r *UserRepo) CreateUser(ctx context.Context, req lib.CreateUserReq) (uuid.UUID, error) {
 	t, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
 	defer func() {
@@ -73,20 +73,20 @@ func (r *UserRepo) CreateUser(ctx context.Context, req lib.CreateUserReq) error 
 
 	err = t.QueryRowContext(ctx, createCredentialsSQL, req.Email, req.PasswordHash).Scan(&userID)
 	if err != nil {
-		return pglib.MapConstraintErr(err, createUserConstraints, err)
+		return uuid.UUID{}, pglib.MapConstraintErr(err, createUserConstraints, err)
 	}
 
 	_, err = t.ExecContext(ctx, createUserSQL, userID, req.Username)
 	if err != nil {
-		return pglib.MapConstraintErr(err, createUserConstraints, err)
+		return uuid.UUID{}, pglib.MapConstraintErr(err, createUserConstraints, err)
 	}
 
 	err = t.Commit()
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
-	return nil
+	return userID, nil
 }
 
 //go:embed sql/get_credentials_by_email.sql

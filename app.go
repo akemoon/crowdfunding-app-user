@@ -14,6 +14,7 @@ import (
 	"github.com/akemoon/crowdfunding-app-user/modules/user/service/user"
 	"github.com/akemoon/crowdfunding-app-user/platform/http"
 	platformRedis "github.com/akemoon/crowdfunding-app-user/platform/redis"
+	userPublisher "github.com/akemoon/crowdfunding-app-user/publisher/user"
 	pgLib "github.com/akemoon/golib/postgres"
 	"github.com/redis/go-redis/v9"
 )
@@ -26,6 +27,8 @@ type AppConfig struct {
 	RedisURL              string
 	JWTSecret             string
 	AvatarsBaseURL        string
+	KafkaBrokers          []string
+	UserTopic             string
 }
 
 type App struct {
@@ -36,6 +39,8 @@ type App struct {
 	db *sql.DB
 
 	redisClient *redis.Client
+
+	publisher *userPublisher.Publisher
 
 	authSvc *auth.Service
 
@@ -72,7 +77,13 @@ func (a *App) InitDB() error {
 	return nil
 }
 
-func (a *App) InitServices() {
+func (a *App) InitServices() error {
+	publisher, err := userPublisher.NewPublisher(a.config.KafkaBrokers, a.config.UserTopic)
+	if err != nil {
+		return fmt.Errorf("init kafka publisher: %w", err)
+	}
+	a.publisher = publisher
+
 	repo := postgres.NewUserRepo(a.db)
 
 	tokenRepo := tokenRepo.NewRefreshTokenRepo(a.redisClient)
@@ -81,9 +92,11 @@ func (a *App) InitServices() {
 	// TODO: change cost
 	hasher := bcrypt.NewHasher(0)
 
-	a.authSvc = auth.NewService(repo, hasher, tokenSvc)
+	a.authSvc = auth.NewService(repo, hasher, tokenSvc, publisher)
 
 	a.userSvc = user.NewService(repo, a.config.AvatarsBaseURL)
+
+	return nil
 }
 
 func (a *App) InitServer() {
@@ -100,7 +113,10 @@ func (a *App) Init() error {
 		return fmt.Errorf("init db: %w", err)
 	}
 
-	a.InitServices()
+	err = a.InitServices()
+	if err != nil {
+		return fmt.Errorf("init services: %w", err)
+	}
 
 	a.InitServer()
 

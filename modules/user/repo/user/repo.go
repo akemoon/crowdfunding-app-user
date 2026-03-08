@@ -9,7 +9,7 @@ import (
 )
 
 type Repo interface {
-	CreateUser(ctx context.Context, req lib.CreateUserReq) error
+	CreateUser(ctx context.Context, req lib.CreateUserReq) (uuid.UUID, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (domain.User, error)
 	UpdateProfile(ctx context.Context, userID uuid.UUID, req domain.UpdateProfileReq) (domain.User, error)
 	Follow(ctx context.Context, followerID uuid.UUID, followeeID uuid.UUID) error
