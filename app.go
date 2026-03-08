@@ -25,6 +25,7 @@ type AppConfig struct {
 	PostgresMigrationsDir string
 	RedisURL              string
 	JWTSecret             string
+	AvatarsBaseURL        string
 }
 
 type App struct {
@@ -82,7 +83,7 @@ func (a *App) InitServices() {
 
 	a.authSvc = auth.NewService(repo, hasher, tokenSvc)
 
-	a.userSvc = user.NewService(repo)
+	a.userSvc = user.NewService(repo, a.config.AvatarsBaseURL)
 }
 
 func (a *App) InitServer() {

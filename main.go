@@ -13,6 +13,7 @@ const (
 	envPostgresMigrationsDir = "POSTGRES_MIGRATIONS_DIR"
 	envRedisURL              = "REDIS_URL"
 	envJWTSecret             = "JWT_SECRET"
+	envAvatarsBaseURL        = "AVATARS_BASE_URL"
 )
 
 // @title User service API
@@ -68,10 +69,16 @@ func loadConfigFromEnv() (AppConfig, error) {
 		return AppConfig{}, err
 	}
 
+	avatarsBaseURL, err := getRequiredEnv(envAvatarsBaseURL)
+	if err != nil {
+		return AppConfig{}, err
+	}
+
 	return AppConfig{
 		PostgresURL:           postgresURL,
 		PostgresMigrationsDir: migrationsDir,
 		RedisURL:              redisURL,
 		JWTSecret:             jwtSecret,
+		AvatarsBaseURL:        avatarsBaseURL,
 	}, nil
 }

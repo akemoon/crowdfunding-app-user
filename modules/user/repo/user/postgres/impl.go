@@ -119,6 +119,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id uuid.UUID) (domain.User, 
 		&u.Username,
 		&u.DisplayName,
 		&u.Description,
+		&u.AvatarUrl,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -143,6 +144,7 @@ func (r *UserRepo) UpdateProfile(ctx context.Context, userID uuid.UUID, req doma
 		&u.Username,
 		&u.DisplayName,
 		&u.Description,
+		&u.AvatarUrl,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

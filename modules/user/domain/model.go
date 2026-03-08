@@ -19,6 +19,7 @@ type User struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"displayName"`
 	Description string    `json:"description"`
+	AvatarUrl   string    `json:"avatarUrl"`
 }
 
 const MaxDisplayNameLength = 120

@@ -12,12 +12,14 @@ import (
 )
 
 type Service struct {
-	repo user.Repo
+	repo           user.Repo
+	avatarsBaseURL string
 }
 
-func NewService(repo user.Repo) *Service {
+func NewService(repo user.Repo, avatarsBaseURL string) *Service {
 	return &Service{
-		repo: repo,
+		repo:           repo,
+		avatarsBaseURL: avatarsBaseURL,
 	}
 }
 
@@ -26,6 +28,8 @@ func (s *Service) GetUserByID(ctx context.Context, id uuid.UUID) (domain.User, e
 	if err != nil {
 		return domain.User{}, fmt.Errorf("repo: %w", err)
 	}
+
+	user.AvatarUrl = s.avatarsBaseURL + "/" + user.AvatarUrl
 
 	return user, nil
 }
@@ -54,6 +58,8 @@ func (s *Service) UpdateProfile(ctx context.Context, userID uuid.UUID, req domai
 	if err != nil {
 		return domain.User{}, fmt.Errorf("repo: %w", err)
 	}
+
+	user.AvatarUrl = s.avatarsBaseURL + "/" + user.AvatarUrl
 
 	return user, nil
 }
