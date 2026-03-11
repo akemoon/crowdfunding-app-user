@@ -29,11 +29,12 @@ func (s *Server) AddAuthHandlers(svc *auth.Service) {
 	s.r.HandleFunc("POST /signup", authHandler.SignUp(svc))
 	s.r.HandleFunc("POST /signin", authHandler.SignIn(svc))
 	s.r.HandleFunc("POST /signout", authHandler.SignOut(svc))
-	// TODO: add check
+	s.r.HandleFunc("GET /check", authHandler.CheckAccessToken(svc))
 }
 
 func (s *Server) AddUserHandlers(svc *user.Service) {
 	s.r.HandleFunc("GET /users/{id}", userHandler.GetUserByID(svc))
+	s.r.HandleFunc("GET /users/me", userHandler.GetMe(svc))
 	s.r.HandleFunc("PATCH /users/me/profile", userHandler.UpdateProfile(svc))
 
 	s.r.HandleFunc("POST /users/{id}/follow", userHandler.Follow(svc))

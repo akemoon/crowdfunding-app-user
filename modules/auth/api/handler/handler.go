@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/akemoon/crowdfunding-app-user/lib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
@@ -110,40 +111,33 @@ func SignOut(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-// @#Summary Check access token
-// @#Description Validate access token from Authorization header
-// @#Accept json
-// @#Produce json
-// @#Param Authorization header string true "Authorization header with access token"
-// @#Success 200 "Access token is valid"
-// @#Header  200 {string} X-User-Id "Authenticated user UUID"
-// @#Failure 401 "Unauthorized"
-// @#Failure 405 "Method not allowed"
-// @#Failure 500 "Internal server error"
-// @#Router /check [get]
-// func CheckAccessToken(svc *token.Service) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		if r.Method != http.MethodGet {
-// 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-// 			return
-// 		}
-//
-// 		authHeader := r.Header.Get("Authorization")
-// 		if strings.TrimSpace(authHeader) == "" {
-// 			http.Error(w, "missing authorization header", http.StatusUnauthorized)
-// 			return
-// 		}
-//
-// 		userID, err := svc.ValidateAccessToken(authHeader)
-// 		if err != nil {
-// 			log.Printf("token service: %s", err)
-//
-// 			status, resp := mapErrToHTTP(err)
-// 			writeJSON(w, status, resp)
-// 			return
-// 		}
-//
-// 		w.Header().Set("X-User-Id", userID.String())
-// 		w.WriteHeader(http.StatusOK)
-// 	}
-// }
+// @Summary Check access token
+// @Description Validate access token from Authorization header, used by Traefik forwardAuth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <accessToken>"
+// @Success 200 "Access token is valid"
+// @Header 200 {string} X-User-Id "Authenticated user UUID"
+// @Failure 401 "Unauthorized"
+// @Failure 500 "Internal server error"
+// @Router /check [get]
+func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if strings.TrimSpace(authHeader) == "" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := svc.ValidateAccessToken(authHeader)
+		if err != nil {
+			log.Printf("token service: %s", err)
+			status, resp := httplib.MapErrToHTTP(err, CheckMapRules)
+			httplib.WriteJSON(w, status, resp)
+			return
+		}
+
+		w.Header().Set("X-User-Id", claims.UserID.String())
+		w.WriteHeader(http.StatusOK)
+	}
+}

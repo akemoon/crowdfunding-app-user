@@ -44,6 +44,37 @@ func GetUserByID(svc *user.Service) http.HandlerFunc {
 	}
 }
 
+// @Summary Get current user profile
+// @Description Get profile of the authenticated user
+// @Accept json
+// @Produce json
+// @Param X-User-ID header string true "User id (uuid)"
+// @Success 200 {object} domain.User "User profile"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {object} httplib.ErrResp "User not found"
+// @Failure 405 {string} string "Method not allowed"
+// @Failure 500 {object} httplib.ErrResp "Internal server error"
+// @Router /users/me [get]
+func GetMe(svc *user.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := httplib.ParseUUIDHeader(r, userIDHeader)
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		user, err := svc.GetUserByID(r.Context(), id)
+		if err != nil {
+			log.Println(err)
+			status, errResp := httplib.MapErrToHTTP(err, GetUserByIDMapRules)
+			httplib.WriteJSON(w, status, errResp)
+			return
+		}
+
+		httplib.WriteJSON(w, http.StatusOK, user)
+	}
+}
+
 // @Summary Update user profile
 // @Description Update user profile by given payload
 // @Accept json
