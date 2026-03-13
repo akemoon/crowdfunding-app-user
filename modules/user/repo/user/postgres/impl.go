@@ -95,7 +95,7 @@ var getCredentialsByEmailSQL string
 func (r *UserRepo) GetCredentialsByEmail(ctx context.Context, email string) (lib.UserCredentials, error) {
 	var c lib.UserCredentials
 
-	err := r.db.QueryRowContext(ctx, getCredentialsByEmailSQL, email).Scan(&c.UserID, &c.PasswordHash)
+	err := r.db.QueryRowContext(ctx, getCredentialsByEmailSQL, email).Scan(&c.UserID, &c.PasswordHash, &c.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return lib.UserCredentials{}, lib.ErrInvalidCredentials

@@ -18,9 +18,6 @@ const (
 	envUserTopic             = "USER_TOPIC"
 )
 
-// @title User service API
-// @version 1.0
-// @description User service API for a crowdfunding app.
 func main() {
 	mainCtx := context.Background()
 

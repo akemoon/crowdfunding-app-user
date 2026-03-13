@@ -32,6 +32,7 @@ func NewService(r token.Repo, s string) *Service {
 func (s *Service) GenerateAccessToken(tc domain.TokenClaims) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID": tc.UserID,
+		"role":   tc.Role,
 		"exp":    time.Now().Add(accessTokenLifeTime).Unix(),
 	})
 
@@ -71,10 +72,10 @@ func (s *Service) DeleteRefreshToken(ctx context.Context, refreshToken string) e
 	return nil
 }
 
-func (s *Service) ValidateAccessToken(token string) (uuid.UUID, error) {
+func (s *Service) ValidateAccessToken(token string) (domain.TokenClaims, error) {
 	parts := strings.Fields(token)
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		return uuid.Nil, domain.ErrInvalidAccessToken
+		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
 	}
 
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
@@ -83,23 +84,28 @@ func (s *Service) ValidateAccessToken(token string) (uuid.UUID, error) {
 		return []byte(s.secret), nil
 	})
 	if err != nil {
-		return uuid.Nil, domain.ErrInvalidAccessToken
+		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
 	}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return uuid.Nil, domain.ErrInvalidAccessToken
+		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
 	}
 
 	userIDStr, ok := claims["userID"].(string)
 	if !ok || userIDStr == "" {
-		return uuid.Nil, domain.ErrInvalidAccessToken
+		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return uuid.Nil, domain.ErrInvalidAccessToken
+		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
 	}
 
-	return userID, nil
+	role, ok := claims["role"].(string)
+	if !ok || role == "" {
+		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
+	}
+
+	return domain.TokenClaims{UserID: userID, Role: role}, nil
 }

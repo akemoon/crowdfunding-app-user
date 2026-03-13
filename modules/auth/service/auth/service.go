@@ -85,7 +85,7 @@ func (s *Service) SignIn(ctx context.Context, req domain.SignInReq) (domain.Sign
 		return domain.SignInResp{}, lib.ErrInvalidCredentials
 	}
 
-	claims := domain.TokenClaims{UserID: creds.UserID}
+	claims := domain.TokenClaims{UserID: creds.UserID, Role: creds.Role}
 
 	accessToken, err := s.tokenSvc.GenerateAccessToken(claims)
 	if err != nil {
@@ -117,12 +117,12 @@ func (s *Service) SignOut(ctx context.Context, req domain.SignOutReq) error {
 }
 
 func (s *Service) ValidateAccessToken(token string) (domain.TokenClaims, error) {
-	userID, err := s.tokenSvc.ValidateAccessToken(token)
+	claims, err := s.tokenSvc.ValidateAccessToken(token)
 	if err != nil {
 		return domain.TokenClaims{}, err
 	}
 
-	return domain.TokenClaims{UserID: userID}, nil
+	return claims, nil
 }
 
 // TODO: block rule: delete refresh tokens from db

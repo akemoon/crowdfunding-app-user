@@ -7,14 +7,7 @@ RUN go mod download
 
 COPY . .
 
-# TODO: refactor
-RUN <<EOF
-    go install github.com/swaggo/swag/cmd/swag@v1.16.6
-    swag init
-    go mod tidy
-
-    go build -tags=swagger -o app
-EOF
+RUN go build -o app
     
 FROM ubuntu:24.04
 

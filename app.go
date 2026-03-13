@@ -103,7 +103,6 @@ func (a *App) InitServer() {
 	a.server = *http.NewServer()
 	a.server.AddAuthHandlers(a.authSvc)
 	a.server.AddUserHandlers(a.userSvc)
-	a.server.AddSwaggerUI()
 	a.server.AddMetrics()
 }
 

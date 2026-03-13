@@ -11,17 +11,11 @@ import (
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 )
 
-// @Summary Sign up
-// @Description Sign up by given payload
-// @Accept json
-// @Produce json
-// @Param payload body domain.SignUpReq true "Sign up payload"
-// @Success 201 "User created"
-// @Failure 400 {object} httplib.ErrResp "Validation error"
-// @Failure 405 "Method not allowed"
-// @Failure 409 {object} httplib.ErrResp "Username or email exists"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /signup [post]
+const (
+	userIDHeader   = "X-User-ID"
+	userRoleHeader = "X-User-Role"
+)
+
 func SignUp(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req domain.SignUpReq
@@ -45,16 +39,6 @@ func SignUp(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Sign in
-// @Description Sign in by given paload
-// @Accept json
-// @Produce json
-// @Param payload body domain.SignInReq true "Sign in payload"
-// @Success 200 {object} domain.SignInResp "Tokens issued"
-// @Failure 401 {object} httplib.ErrResp "Invalid credentials"
-// @Failure 405 "Method not allowed"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /signin [post]
 func SignIn(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req domain.SignInReq
@@ -78,16 +62,6 @@ func SignIn(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Sign out
-// @Description Revoke refresh token
-// @Accept json
-// @Produce json
-// @Param payload body domain.SignOutReq true "Sign out payload"
-// @Success 200 "Signed out"
-// @Failure 400 {object} httplib.ErrResp "Invalid refresh token"
-// @Failure 405 "Method not allowed"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /signout [post]
 func SignOut(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req domain.SignOutReq
@@ -111,16 +85,6 @@ func SignOut(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Check access token
-// @Description Validate access token from Authorization header, used by Traefik forwardAuth
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Bearer <accessToken>"
-// @Success 200 "Access token is valid"
-// @Header 200 {string} X-User-Id "Authenticated user UUID"
-// @Failure 401 "Unauthorized"
-// @Failure 500 "Internal server error"
-// @Router /check [get]
 func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -137,7 +101,10 @@ func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("X-User-Id", claims.UserID.String())
+		w.Header().Set(userIDHeader, claims.UserID.String())
+		w.Header().Set(userRoleHeader, claims.Role)
 		w.WriteHeader(http.StatusOK)
 	}
 }
+
+// TODO: refresh

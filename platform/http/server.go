@@ -10,7 +10,6 @@ import (
 	"github.com/akemoon/golib/myhttp"
 	"github.com/akemoon/golib/myhttp/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Server struct {
@@ -39,12 +38,6 @@ func (s *Server) AddUserHandlers(svc *user.Service) {
 
 	s.r.HandleFunc("POST /users/{id}/follow", userHandler.Follow(svc))
 	s.r.HandleFunc("DELETE /users/{id}/follow", userHandler.Unfollow(svc))
-}
-
-func (s *Server) AddSwaggerUI() {
-	s.r.Handle("/swagger/", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
 }
 
 func (s *Server) AddMetrics() {

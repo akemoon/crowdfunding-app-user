@@ -26,6 +26,7 @@ type CreateUserReq struct {
 type UserCredentials struct {
 	UserID       uuid.UUID
 	PasswordHash string
+	Role         string
 }
 
 const (

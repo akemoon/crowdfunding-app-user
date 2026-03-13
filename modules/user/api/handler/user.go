@@ -13,17 +13,6 @@ import (
 
 const userIDHeader = "X-User-ID"
 
-// @Summary Get user profile
-// @Description Get user profile by path user id
-// @Accept json
-// @Produce json
-// @Param id path string true "User id (uuid)"
-// @Success 200 {object} domain.User "User profile"
-// @Failure 400 {string} string "Invalid path id"
-// @Failure 404 {object} httplib.ErrResp "User not found"
-// @Failure 405 {string} string "Method not allowed"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /users/{id} [get]
 func GetUserByID(svc *user.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := uuid.Parse(r.PathValue("id"))
@@ -44,17 +33,6 @@ func GetUserByID(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Get current user profile
-// @Description Get profile of the authenticated user
-// @Accept json
-// @Produce json
-// @Param X-User-ID header string true "User id (uuid)"
-// @Success 200 {object} domain.User "User profile"
-// @Failure 401 {string} string "Unauthorized"
-// @Failure 404 {object} httplib.ErrResp "User not found"
-// @Failure 405 {string} string "Method not allowed"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /users/me [get]
 func GetMe(svc *user.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := httplib.ParseUUIDHeader(r, userIDHeader)
@@ -75,21 +53,6 @@ func GetMe(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Update user profile
-// @Description Update user profile by given payload
-// @Accept json
-// @Produce json
-// @Param X-User-ID header string true "User id (uuid)"
-// @Param payload body domain.UpdateProfileReq true "Update user profile payload"
-// @Success 200 {object} domain.User "User profile"
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 400 {object} httplib.ErrResp "Validation error"
-// @Failure 401 {string} string "Unauthorized"
-// @Failure 404 {object} httplib.ErrResp "User not found"
-// @Failure 405 {string} string "Method not allowed"
-// @Failure 409 {object} httplib.ErrResp "Conflict"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /users/me/profile [patch]
 func UpdateProfile(svc *user.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := httplib.ParseUUIDHeader(r, userIDHeader)
@@ -118,21 +81,6 @@ func UpdateProfile(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Follow to a user
-// @Description Follow to a user by id
-// @Accept json
-// @Produce json
-// @Param X-User-ID header string true "Follower id (uuid)"
-// @Param id path string true "Followee id (uuid)"
-// @Success 201 {string} string "Created"
-// @Failure 400 {string} string "Invalid path id"
-// @Failure 401 {string} string "Unauthorized"
-// @Failure 404 {object} httplib.ErrResp "Follower or followee not found"
-// @Failure 405 {string} string "Method not allowed"
-// @Failure 409 {object} httplib.ErrResp "Already following"
-// @Failure 422 {object} httplib.ErrResp "Cannot follow yourself"
-// @Failure 500 {object} httplib.ErrResp "Internal server error"
-// @Router /users/{id}/follow [post]
 func Follow(svc *user.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		followerID, err := httplib.ParseUUIDHeader(r, userIDHeader)
@@ -159,18 +107,6 @@ func Follow(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-// @Summary Unfollow to a user
-// @Description Unfollow to a user by id
-// @Accept json
-// @Produce json
-// @Param X-User-ID header string true "Follower id (uuid)"
-// @Param id path string true "Followee id (uuid)"
-// @Success 204 {string} string "No content"
-// @Failure 400 {string} string "Invalid path id"
-// @Failure 401 {string} string "Unauthorized"
-// @Failure 405 {string} string "Method not allowed"
-// @Failure 500 {object} string "Internal server error"
-// @Router /users/{id}/follow [delete]
 func Unfollow(svc *user.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		followerID, err := httplib.ParseUUIDHeader(r, userIDHeader)
@@ -196,7 +132,6 @@ func Unfollow(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-// TODO: implement
-//
-// @Router /me/subscriptions [get]
-// @Router /user/{id}/subscriptions [get]
+// TODO: implement subscriptions
+// GET /me/subscriptions
+// GET /users/{id}/subscriptions

@@ -1,14 +1,28 @@
 -- +goose Up
 
+create table if not exists roles
+(
+    id   smallint primary key,
+    name text not null,
+
+    constraint roles_name_unique unique (name)
+);
+
+insert into roles (id, name) values
+(1, 'user'),
+(2, 'moderator');
+
 create table if not exists credentials
 (
     user_id       uuid primary key default uuidv7(),
     email         text not null,
     password_hash text not null,
+    role_id       smallint not null default 1,
     created_at    timestamptz not null default now(),
     -- TODO: is blocked
 
-    constraint credentials_email_unique unique (email)
+    constraint credentials_email_unique unique (email),
+    constraint credentials_role_fk foreign key (role_id) references roles(id)
 );
 
 create table if not exists default_avatars
@@ -80,3 +94,4 @@ drop function if exists assign_default_avatar;
 drop table if exists users;
 drop table if exists default_avatars;
 drop table if exists credentials;
+drop table if exists roles;
