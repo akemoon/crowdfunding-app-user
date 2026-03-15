@@ -20,7 +20,7 @@ values
     ('00000000-0000-7000-8000-000000000001', 'alice-test', 'Alice Test', 'Test account for local development', ''),
     ('00000000-0000-7000-8000-000000000002', 'boris99', 'Борис Тест', 'Test account for local development', ''),
     ('00000000-0000-7000-8000-000000000003', 'cyril-dev', 'Cyril Dev', 'Test account for local development', ''),
-    ('00000000-0000-7000-8000-000000000004', 'strelok', 'Стрелок', 'Меченый. Иду на Монолит.', ''),
+    ('00000000-0000-7000-8000-000000000004', 'strelok', 'Стрелок', 'Меченый. Иду на Монолит.', 'users/00000000-0000-7000-8000-000000000004/avatar.jpeg'),
     ('00000000-0000-7000-8000-000000000005', 'admin', 'Admin', 'Moderator account', '')
 on conflict do nothing;
 

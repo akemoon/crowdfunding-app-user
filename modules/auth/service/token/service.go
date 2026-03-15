@@ -2,6 +2,9 @@ package token
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -14,7 +17,7 @@ import (
 
 const (
 	accessTokenLifeTime  = 15 * time.Minute
-	refreshTokenLifeTime = 7 * 24 * time.Hour
+	refreshTokenLifeTime = 24 * 60 * time.Minute
 )
 
 type Service struct {
@@ -44,27 +47,40 @@ func (s *Service) GenerateAccessToken(tc domain.TokenClaims) (string, error) {
 	return signed, nil
 }
 
-func (s *Service) GenerateRefreshToken(ctx context.Context, tc domain.TokenClaims) (string, error) {
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": tc.UserID,
-		"exp":    time.Now().Add(refreshTokenLifeTime).Unix(),
-	})
+func (s *Service) GenerateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {
+	raw := make([]byte, 32)
 
-	signed, err := t.SignedString([]byte(s.secret))
+	_, err := rand.Read(raw)
 	if err != nil {
-		return "", fmt.Errorf("sign refresh token: %w", err)
+		return "", fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	err = s.refreshTokenRepo.Set(ctx, signed, refreshTokenLifeTime)
+	tok := hex.EncodeToString(raw)
+	hash := sha256hex(tok)
+
+	err = s.refreshTokenRepo.Set(ctx, hash, userID, refreshTokenLifeTime)
 	if err != nil {
 		return "", fmt.Errorf("token repo: %w", err)
 	}
 
-	return signed, nil
+	return tok, nil
 }
 
-func (s *Service) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	err := s.refreshTokenRepo.Delete(ctx, refreshToken)
+func (s *Service) ValidateRefreshToken(ctx context.Context, tok string) (uuid.UUID, error) {
+	hash := sha256hex(tok)
+
+	userID, err := s.refreshTokenRepo.Get(ctx, hash)
+	if err != nil {
+		return uuid.UUID{}, domain.ErrInvalidRefreshToken
+	}
+
+	return userID, nil
+}
+
+func (s *Service) DeleteRefreshToken(ctx context.Context, tok string) error {
+	hash := sha256hex(tok)
+
+	err := s.refreshTokenRepo.Delete(ctx, hash)
 	if err != nil {
 		return fmt.Errorf("token repo: %w", err)
 	}
@@ -72,8 +88,8 @@ func (s *Service) DeleteRefreshToken(ctx context.Context, refreshToken string) e
 	return nil
 }
 
-func (s *Service) ValidateAccessToken(token string) (domain.TokenClaims, error) {
-	parts := strings.Fields(token)
+func (s *Service) ValidateAccessToken(tok string) (domain.TokenClaims, error) {
+	parts := strings.Fields(tok)
 	if len(parts) != 2 || parts[0] != "Bearer" {
 		return domain.TokenClaims{}, domain.ErrInvalidAccessToken
 	}
@@ -108,4 +124,9 @@ func (s *Service) ValidateAccessToken(token string) (domain.TokenClaims, error) 
 	}
 
 	return domain.TokenClaims{UserID: userID, Role: role}, nil
+}
+
+func sha256hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
 }

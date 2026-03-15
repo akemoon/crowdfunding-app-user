@@ -7,6 +7,7 @@ import (
 	"log"
 
 	tokenRepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/token/redis"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher/bcrypt"
@@ -16,6 +17,7 @@ import (
 	platformRedis "github.com/akemoon/crowdfunding-app-user/platform/redis"
 	userPublisher "github.com/akemoon/crowdfunding-app-user/publisher/user"
 	pgLib "github.com/akemoon/golib/postgres"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -89,8 +91,7 @@ func (a *App) InitServices() error {
 	tokenRepo := tokenRepo.NewRefreshTokenRepo(a.redisClient)
 	tokenSvc := token.NewService(tokenRepo, a.config.JWTSecret)
 
-	// TODO: change cost
-	hasher := bcrypt.NewHasher(0)
+	hasher := bcrypt.NewHasher(10)
 
 	a.authSvc = auth.NewService(repo, hasher, tokenSvc, publisher)
 
@@ -100,11 +101,13 @@ func (a *App) InitServices() error {
 }
 
 func (a *App) InitServer() {
+	authMetrics := metrics.NewAuthMetrics(prometheus.DefaultRegisterer)
 	a.server = *http.NewServer()
-	a.server.AddAuthHandlers(a.authSvc)
+	a.server.AddAuthHandlers(a.authSvc, authMetrics)
 	a.server.AddUserHandlers(a.userSvc)
 	a.server.AddMetrics()
 }
+
 
 func (a *App) Init() error {
 	err := a.InitDB()

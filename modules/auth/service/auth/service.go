@@ -92,7 +92,7 @@ func (s *Service) SignIn(ctx context.Context, req domain.SignInReq) (domain.Sign
 		return domain.SignInResp{}, fmt.Errorf("token service: %w", err)
 	}
 
-	refreshToken, err := s.tokenSvc.GenerateRefreshToken(ctx, claims)
+	refreshToken, err := s.tokenSvc.GenerateRefreshToken(ctx, creds.UserID)
 	if err != nil {
 		return domain.SignInResp{}, fmt.Errorf("token service: %w", err)
 	}
@@ -123,6 +123,44 @@ func (s *Service) ValidateAccessToken(token string) (domain.TokenClaims, error) 
 	}
 
 	return claims, nil
+}
+
+func (s *Service) Refresh(ctx context.Context, req domain.RefreshReq) (domain.RefreshResp, error) {
+	if req.RefreshToken == "" {
+		return domain.RefreshResp{}, domain.ErrInvalidRefreshToken
+	}
+
+	userID, err := s.tokenSvc.ValidateRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		return domain.RefreshResp{}, err
+	}
+
+	creds, err := s.userRepo.GetCredentialsByID(ctx, userID)
+	if err != nil {
+		return domain.RefreshResp{}, fmt.Errorf("repo: %w", err)
+	}
+
+	err = s.tokenSvc.DeleteRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		return domain.RefreshResp{}, fmt.Errorf("token service: %w", err)
+	}
+
+	newRefreshToken, err := s.tokenSvc.GenerateRefreshToken(ctx, userID)
+	if err != nil {
+		return domain.RefreshResp{}, fmt.Errorf("token service: %w", err)
+	}
+
+	claims := domain.TokenClaims{UserID: userID, Role: creds.Role}
+
+	newAccessToken, err := s.tokenSvc.GenerateAccessToken(claims)
+	if err != nil {
+		return domain.RefreshResp{}, fmt.Errorf("token service: %w", err)
+	}
+
+	return domain.RefreshResp{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
 }
 
 // TODO: block rule: delete refresh tokens from db

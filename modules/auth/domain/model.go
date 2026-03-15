@@ -20,6 +20,15 @@ type SignOutReq struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+type RefreshReq struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+type RefreshResp struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 const (
 	MinPasswordLength = 12
 	MaxPasswordLength = 64

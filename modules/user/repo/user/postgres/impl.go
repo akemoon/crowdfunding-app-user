@@ -106,6 +106,23 @@ func (r *UserRepo) GetCredentialsByEmail(ctx context.Context, email string) (lib
 	return c, nil
 }
 
+//go:embed sql/get_credentials_by_id.sql
+var getCredentialsByIDSQL string
+
+func (r *UserRepo) GetCredentialsByID(ctx context.Context, id uuid.UUID) (lib.UserCredentials, error) {
+	var c lib.UserCredentials
+
+	err := r.db.QueryRowContext(ctx, getCredentialsByIDSQL, id).Scan(&c.UserID, &c.PasswordHash, &c.Role)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return lib.UserCredentials{}, lib.ErrInvalidCredentials
+		}
+		return lib.UserCredentials{}, err
+	}
+
+	return c, nil
+}
+
 //go:embed sql/get_user_by_id.sql
 var getUserByIDSQL string
 

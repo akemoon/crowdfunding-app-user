@@ -40,4 +40,13 @@ var (
 			Message: domain.ErrInvalidAccessToken.Error(),
 		},
 	}
+
+	RefreshMapRules = []httplib.ErrMapRule{
+		{
+			Err:     domain.ErrInvalidRefreshToken,
+			Status:  http.StatusUnauthorized,
+			Code:    ErrCodeInvalidRefreshToken,
+			Message: domain.ErrInvalidRefreshToken.Error(),
+		},
+	}
 )

@@ -8,6 +8,7 @@ import (
 
 	"github.com/akemoon/crowdfunding-app-user/lib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 )
 
@@ -39,18 +40,20 @@ func SignUp(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-func SignIn(svc *auth.Service) http.HandlerFunc {
+func SignIn(svc *auth.Service, m *metrics.AuthMetrics) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req domain.SignInReq
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
+			m.AuthSignInTotal.WithLabelValues("failure").Inc()
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		resp, err := svc.SignIn(r.Context(), req)
 		if err != nil {
+			m.AuthSignInTotal.WithLabelValues("failure").Inc()
 			log.Printf("service: %s", err)
 
 			status, errResp := httplib.MapErrToHTTP(err, SignInMapRules)
@@ -58,6 +61,7 @@ func SignIn(svc *auth.Service) http.HandlerFunc {
 			return
 		}
 
+		m.AuthSignInTotal.WithLabelValues("success").Inc()
 		httplib.WriteJSON(w, http.StatusOK, resp)
 	}
 }
@@ -87,8 +91,14 @@ func SignOut(svc *auth.Service) http.HandlerFunc {
 
 func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		optional := r.URL.Query().Get("optional") == "true"
+
 		authHeader := r.Header.Get("Authorization")
 		if strings.TrimSpace(authHeader) == "" {
+			if optional {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -107,4 +117,25 @@ func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-// TODO: refresh
+func Refresh(svc *auth.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req domain.RefreshReq
+
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		resp, err := svc.Refresh(r.Context(), req)
+		if err != nil {
+			log.Printf("service: %s", err)
+
+			status, errResp := httplib.MapErrToHTTP(err, RefreshMapRules)
+			httplib.WriteJSON(w, status, errResp)
+			return
+		}
+
+		httplib.WriteJSON(w, http.StatusOK, resp)
+	}
+}

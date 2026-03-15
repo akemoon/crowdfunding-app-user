@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	authHandler "github.com/akemoon/crowdfunding-app-user/modules/auth/api/handler"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 	userHandler "github.com/akemoon/crowdfunding-app-user/modules/user/api/handler"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/service/user"
@@ -24,11 +25,12 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) AddAuthHandlers(svc *auth.Service) {
+func (s *Server) AddAuthHandlers(svc *auth.Service, m *metrics.AuthMetrics) {
 	s.r.HandleFunc("POST /signup", authHandler.SignUp(svc))
-	s.r.HandleFunc("POST /signin", authHandler.SignIn(svc))
+	s.r.HandleFunc("POST /signin", authHandler.SignIn(svc, m))
 	s.r.HandleFunc("POST /signout", authHandler.SignOut(svc))
 	s.r.HandleFunc("GET /check", authHandler.CheckAccessToken(svc))
+	s.r.HandleFunc("POST /refresh", authHandler.Refresh(svc))
 }
 
 func (s *Server) AddUserHandlers(svc *user.Service) {
