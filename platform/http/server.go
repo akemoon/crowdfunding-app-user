@@ -8,29 +8,29 @@ import (
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 	userHandler "github.com/akemoon/crowdfunding-app-user/modules/user/api/handler"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/service/user"
-	"github.com/akemoon/golib/myhttp"
-	"github.com/akemoon/golib/myhttp/middleware"
+	"github.com/akemoon/golib/httplib"
+	"github.com/akemoon/golib/httplib/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Server struct {
-	r *myhttp.Router
+	r *httplib.Router
 }
 
 func NewServer() *Server {
 	return &Server{
-		r: myhttp.NewRouter().Use(
+		r: httplib.NewRouter().Use(
 			middleware.BaseMetrics(),
 		),
 	}
 }
 
 func (s *Server) AddAuthHandlers(svc *auth.Service, m *metrics.AuthMetrics) {
-	s.r.HandleFunc("POST /signup", authHandler.SignUp(svc))
-	s.r.HandleFunc("POST /signin", authHandler.SignIn(svc, m))
-	s.r.HandleFunc("POST /signout", authHandler.SignOut(svc))
-	s.r.HandleFunc("GET /check", authHandler.CheckAccessToken(svc))
-	s.r.HandleFunc("POST /refresh", authHandler.Refresh(svc))
+	s.r.HandleFunc("POST /auth/signup", authHandler.SignUp(svc))
+	s.r.HandleFunc("POST /auth/signin", authHandler.SignIn(svc, m))
+	s.r.HandleFunc("POST /auth/signout", authHandler.SignOut(svc))
+	s.r.HandleFunc("GET /auth/check", authHandler.CheckAccessToken(svc))
+	s.r.HandleFunc("POST /auth/refresh", authHandler.Refresh(svc))
 }
 
 func (s *Server) AddUserHandlers(svc *user.Service) {

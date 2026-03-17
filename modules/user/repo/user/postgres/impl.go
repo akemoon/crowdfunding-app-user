@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
-	"github.com/akemoon/crowdfunding-app-user/lib/pglib"
+	"github.com/akemoon/golib/pglib"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/domain"
 	"github.com/google/uuid"
 )

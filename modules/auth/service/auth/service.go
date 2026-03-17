@@ -6,12 +6,12 @@ import (
 	"log"
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
-	"github.com/akemoon/crowdfunding-app-user/lib/validation"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/repo/user"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher"
-	userPublisher "github.com/akemoon/crowdfunding-app-user/publisher/user"
+	userPublisher "github.com/akemoon/crowdfunding-app-user/platform/publisher/user"
+	"github.com/akemoon/golib/validation"
 	"github.com/google/uuid"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
-	"github.com/akemoon/crowdfunding-app-user/lib/httplib"
+	"github.com/akemoon/golib/httplib"
 )
 
 const (

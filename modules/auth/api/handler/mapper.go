@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/akemoon/crowdfunding-app-user/lib/api"
-	"github.com/akemoon/crowdfunding-app-user/lib/httplib"
+	"github.com/akemoon/golib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
 )
 

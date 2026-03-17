@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"log"
 
-	tokenRepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/token/redis"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
+	tokenRepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/token/redis"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher/bcrypt"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/repo/user/postgres"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/service/user"
 	"github.com/akemoon/crowdfunding-app-user/platform/http"
+	userPublisher "github.com/akemoon/crowdfunding-app-user/platform/publisher/user"
 	platformRedis "github.com/akemoon/crowdfunding-app-user/platform/redis"
-	userPublisher "github.com/akemoon/crowdfunding-app-user/publisher/user"
-	pgLib "github.com/akemoon/golib/postgres"
+	pgLib "github.com/akemoon/golib/pglib"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 )
@@ -107,7 +107,6 @@ func (a *App) InitServer() {
 	a.server.AddUserHandlers(a.userSvc)
 	a.server.AddMetrics()
 }
-
 
 func (a *App) Init() error {
 	err := a.InitDB()

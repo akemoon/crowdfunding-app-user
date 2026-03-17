@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
-	"github.com/akemoon/crowdfunding-app-user/lib/validation"
+	"github.com/akemoon/golib/validation"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/domain"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/repo/user"
 	"github.com/google/uuid"

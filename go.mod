@@ -3,7 +3,7 @@ module github.com/akemoon/crowdfunding-app-user
 go 1.25.3
 
 require (
-	github.com/akemoon/golib v0.0.0-20260131110518-3db8f1682b21
+	github.com/akemoon/golib v0.0.0-20260317144338-3df85e46f369
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.8.0

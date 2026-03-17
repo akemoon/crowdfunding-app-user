@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/akemoon/crowdfunding-app-user/lib/httplib"
+	"github.com/akemoon/golib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
