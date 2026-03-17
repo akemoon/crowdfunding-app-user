@@ -5,8 +5,8 @@ import "github.com/google/uuid"
 type EventType int
 
 const (
-	EventTypeUnknown    EventType = iota
-	EventTypeRegistered EventType = iota
+	EventTypeUnknown EventType = iota
+	EventTypeRegistered
 )
 
 type Event struct {
