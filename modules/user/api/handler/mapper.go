@@ -3,66 +3,70 @@ package handler
 import (
 	"net/http"
 
-	"github.com/akemoon/crowdfunding-app-user/lib/api"
-	"github.com/akemoon/golib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/domain"
-)
-
-const (
-	ErrCodeNotFound         = "not_found"
-	ErrCodeAlreadyFollow    = "already_following"
-	ErrCodeFollowYourself   = "follow_to_yourself"
-	ErrCodeFollowerNotFound = "follower_not_found"
-	ErrCodeFolloweeNotFound = "followee_not_found"
+	"github.com/akemoon/golib/httplib"
 )
 
 var (
-	MapRuleErrNotFound = httplib.ErrMapRule{
+	ruleNotFound = httplib.ErrMapRule{
 		Err:     domain.ErrNotFound,
 		Status:  http.StatusNotFound,
-		Code:    ErrCodeNotFound,
+		Code:    "not_found",
 		Message: domain.ErrNotFound.Error(),
 	}
-	MapRuleErrAlreadyFollowing = httplib.ErrMapRule{
+	ruleUsernameExists = httplib.ErrMapRule{
+		Err:     domain.ErrUsernameExists,
+		Status:  http.StatusConflict,
+		Code:    "username_exists",
+		Message: domain.ErrUsernameExists.Error(),
+	}
+	ruleEmailExists = httplib.ErrMapRule{
+		Err:     domain.ErrEmailExists,
+		Status:  http.StatusConflict,
+		Code:    "email_exists",
+		Message: domain.ErrEmailExists.Error(),
+	}
+	ruleAlreadyFollowing = httplib.ErrMapRule{
 		Err:     domain.ErrAlreadyFollowing,
 		Status:  http.StatusConflict,
-		Code:    ErrCodeAlreadyFollow,
+		Code:    "already_following",
 		Message: domain.ErrAlreadyFollowing.Error(),
 	}
-	MapRuleErrFollowToYourself = httplib.ErrMapRule{
+	ruleFollowYourself = httplib.ErrMapRule{
 		Err:     domain.ErrFollowToYourself,
 		Status:  http.StatusUnprocessableEntity,
-		Code:    ErrCodeFollowYourself,
+		Code:    "follow_yourself",
 		Message: domain.ErrFollowToYourself.Error(),
 	}
-	MapRuleErrFollowerNotFound = httplib.ErrMapRule{
+	ruleFollowerNotFound = httplib.ErrMapRule{
 		Err:     domain.ErrFollowerNotFound,
 		Status:  http.StatusNotFound,
-		Code:    ErrCodeFollowerNotFound,
+		Code:    "follower_not_found",
 		Message: domain.ErrFollowerNotFound.Error(),
 	}
-	MapRuleErrFolloweeNotFound = httplib.ErrMapRule{
+	ruleFolloweeNotFound = httplib.ErrMapRule{
 		Err:     domain.ErrFolloweeNotFound,
 		Status:  http.StatusNotFound,
-		Code:    ErrCodeFolloweeNotFound,
+		Code:    "followee_not_found",
 		Message: domain.ErrFolloweeNotFound.Error(),
 	}
 )
 
 var (
-	GetUserByIDMapRules = []httplib.ErrMapRule{
-		MapRuleErrNotFound,
+	createUserMapRules = []httplib.ErrMapRule{
+		ruleUsernameExists,
+		ruleEmailExists,
 	}
-
-	UpdateProfileMapRules = []httplib.ErrMapRule{
-		api.MapRuleErrUsernameExists,
-		MapRuleErrNotFound,
+	getUserMapRules = []httplib.ErrMapRule{
+		ruleNotFound,
 	}
-
-	FollowMapRules = []httplib.ErrMapRule{
-		MapRuleErrAlreadyFollowing,
-		MapRuleErrFollowToYourself,
-		MapRuleErrFollowerNotFound,
-		MapRuleErrFolloweeNotFound,
+	updateProfileMapRules = []httplib.ErrMapRule{
+		ruleNotFound,
+	}
+	followMapRules = []httplib.ErrMapRule{
+		ruleAlreadyFollowing,
+		ruleFollowYourself,
+		ruleFollowerNotFound,
+		ruleFolloweeNotFound,
 	}
 )

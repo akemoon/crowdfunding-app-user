@@ -1,7 +1,12 @@
+// @title           User Service API
+// @version         1.0
+// @description     CRUD API for user management
+// @host            localhost:10000
+// @BasePath        /
+
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -9,24 +14,17 @@ import (
 )
 
 const (
-	envPostgresURL           = "POSTGRES_URL"
-	envPostgresMigrationsDir = "POSTGRES_MIGRATIONS_DIR"
-	envRedisURL              = "REDIS_URL"
-	envJWTSecret             = "JWT_SECRET"
-	envAvatarsBaseURL        = "AVATARS_BASE_URL"
-	envKafkaBrokers          = "KAFKA_BROKERS"
-	envUserTopic             = "USER_TOPIC"
+	envPostgresDSN = "POSTGRES_DSN"
+	envHTTPPort    = "HTTP_PORT"
 )
 
 func main() {
-	mainCtx := context.Background()
-
-	cfg, err := loadConfigFromEnv()
+	cfg, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	app := NewApp(mainCtx, cfg)
+	app := NewApp(cfg)
 
 	err = app.Init()
 	if err != nil {
@@ -39,17 +37,6 @@ func main() {
 	}
 }
 
-func parseBrokers(value string) []string {
-	parts := strings.Split(value, ",")
-	brokers := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if t := strings.TrimSpace(p); t != "" {
-			brokers = append(brokers, t)
-		}
-	}
-	return brokers
-}
-
 func getRequiredEnv(key string) (string, error) {
 	val := strings.TrimSpace(os.Getenv(key))
 	if val == "" {
@@ -58,50 +45,19 @@ func getRequiredEnv(key string) (string, error) {
 	return val, nil
 }
 
-func loadConfigFromEnv() (AppConfig, error) {
-	postgresURL, err := getRequiredEnv(envPostgresURL)
+func loadConfig() (AppConfig, error) {
+	dsn, err := getRequiredEnv(envPostgresDSN)
 	if err != nil {
 		return AppConfig{}, err
 	}
 
-	migrationsDir, err := getRequiredEnv(envPostgresMigrationsDir)
-	if err != nil {
-		return AppConfig{}, err
-	}
-
-	redisURL, err := getRequiredEnv(envRedisURL)
-	if err != nil {
-		return AppConfig{}, err
-	}
-
-	jwtSecret, err := getRequiredEnv(envJWTSecret)
-	if err != nil {
-		return AppConfig{}, err
-	}
-
-	avatarsBaseURL, err := getRequiredEnv(envAvatarsBaseURL)
-	if err != nil {
-		return AppConfig{}, err
-	}
-
-	brokersVal, err := getRequiredEnv(envKafkaBrokers)
-	if err != nil {
-		return AppConfig{}, err
-	}
-	brokers := parseBrokers(brokersVal)
-
-	userTopic, err := getRequiredEnv(envUserTopic)
-	if err != nil {
-		return AppConfig{}, err
+	port := strings.TrimSpace(os.Getenv(envHTTPPort))
+	if port == "" {
+		port = "10000"
 	}
 
 	return AppConfig{
-		PostgresURL:           postgresURL,
-		PostgresMigrationsDir: migrationsDir,
-		RedisURL:              redisURL,
-		JWTSecret:             jwtSecret,
-		AvatarsBaseURL:        avatarsBaseURL,
-		KafkaBrokers:          brokers,
-		UserTopic:             userTopic,
+		PostgresDSN: dsn,
+		HTTPPort:    port,
 	}, nil
 }

@@ -1,0 +1,276 @@
+basePath: /
+definitions:
+  domain.FollowReq:
+    properties:
+      followerId:
+        type: string
+    type: object
+  domain.UpdateProfileReq:
+    properties:
+      description:
+        type: string
+      displayName:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      avatarKey:
+        type: string
+      description:
+        type: string
+      displayName:
+        type: string
+      id:
+        type: string
+      updatedAt:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_akemoon_crowdfunding-app-user_modules_user_domain.CreateUserReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.ErrorResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+host: localhost:10000
+info:
+  contact: {}
+  description: CRUD API for user management
+  title: User Service API
+  version: "1.0"
+paths:
+  /users:
+    get:
+      description: Returns all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user and their credentials (users + credentials)
+      parameters:
+      - description: New user data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_akemoon_crowdfunding-app-user_modules_user_domain.CreateUserReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: username or email already taken
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create user
+      tags:
+      - users
+  /users/{id}:
+    get:
+      description: Returns user profile by UUID
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Updates display_name and description of the user
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New profile data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateProfileReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update profile
+      tags:
+      - users
+  /users/{id}/follow:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a record from the follows table
+      parameters:
+      - description: Followee UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Follower UUID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.FollowReq'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Unfollow user
+      tags:
+      - follows
+    post:
+      consumes:
+      - application/json
+      description: Creates a record in the follows table (follower -> followee)
+      parameters:
+      - description: Followee UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Follower UUID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/domain.FollowReq'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: already following
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "422":
+          description: cannot follow yourself
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Follow user
+      tags:
+      - follows
+  /users/{id}/follows:
+    get:
+      description: Returns the list of users that the given user follows
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.User'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get follows
+      tags:
+      - follows
+swagger: "2.0"

@@ -5,63 +5,89 @@ import (
 	"fmt"
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
-	"github.com/akemoon/golib/validation"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/domain"
-	"github.com/akemoon/crowdfunding-app-user/modules/user/repo/user"
+	userRepo "github.com/akemoon/crowdfunding-app-user/modules/user/repo/user"
+	"github.com/akemoon/golib/validation"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
-	repo           user.Repo
-	avatarsBaseURL string
+	repo userRepo.Repo
 }
 
-func NewService(repo user.Repo, avatarsBaseURL string) *Service {
-	return &Service{
-		repo:           repo,
-		avatarsBaseURL: avatarsBaseURL,
+func NewService(repo userRepo.Repo) *Service {
+	return &Service{repo: repo}
+}
+
+func (s *Service) CreateUser(ctx context.Context, req domain.CreateUserReq) (uuid.UUID, error) {
+	ve := &validation.Error{}
+
+	if err := lib.ValidateUsername(req.Username); err != nil {
+		ve.Add("username", err.Error())
 	}
+	if err := lib.ValidateEmail(req.Email); err != nil {
+		ve.Add("email", err.Error())
+	}
+	if req.Password == "" {
+		ve.Add("password", "password is required")
+	}
+	if ve.HasErrors() {
+		return uuid.UUID{}, ve
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("hash password: %w", err)
+	}
+
+	id, err := s.repo.CreateUser(ctx, req, string(hash))
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("repo: %w", err)
+	}
+
+	return id, nil
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id uuid.UUID) (domain.User, error) {
-	user, err := s.repo.GetUserByID(ctx, id)
+	u, err := s.repo.GetUserByID(ctx, id)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("repo: %w", err)
 	}
+	return u, nil
+}
 
-	user.AvatarUrl = s.avatarsBaseURL + "/" + user.AvatarUrl
+func (s *Service) ListUsers(ctx context.Context) ([]domain.User, error) {
+	users, err := s.repo.ListUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("repo: %w", err)
+	}
 
-	return user, nil
+	if users == nil {
+		users = []domain.User{}
+	}
+
+	return users, nil
 }
 
 func (s *Service) UpdateProfile(ctx context.Context, userID uuid.UUID, req domain.UpdateProfileReq) (domain.User, error) {
 	ve := &validation.Error{}
 
-	// TODO: maybe check in cycle
-	err := lib.ValidateUsername(req.Username)
-	if err != nil {
-		ve.Add("username", err.Error())
-	}
-	err = domain.ValidateDisplayName(req.DisplayName)
-	if err != nil {
+	if err := domain.ValidateDisplayName(req.DisplayName); err != nil {
 		ve.Add("displayName", err.Error())
 	}
-	err = domain.ValidateDescription(req.Description)
-	if err != nil {
+	if err := domain.ValidateDescription(req.Description); err != nil {
 		ve.Add("description", err.Error())
 	}
 	if ve.HasErrors() {
 		return domain.User{}, ve
 	}
 
-	user, err := s.repo.UpdateProfile(ctx, userID, req)
+	u, err := s.repo.UpdateProfile(ctx, userID, req)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("repo: %w", err)
 	}
-
-	user.AvatarUrl = s.avatarsBaseURL + "/" + user.AvatarUrl
-
-	return user, nil
+	return u, nil
 }
 
 func (s *Service) Follow(ctx context.Context, followerID uuid.UUID, followeeID uuid.UUID) error {
@@ -78,4 +104,15 @@ func (s *Service) Unfollow(ctx context.Context, followerID uuid.UUID, followeeID
 		return fmt.Errorf("repo: %w", err)
 	}
 	return nil
+}
+
+func (s *Service) GetFollows(ctx context.Context, userID uuid.UUID) ([]domain.User, error) {
+	users, err := s.repo.GetFollows(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("repo: %w", err)
+	}
+	if users == nil {
+		users = []domain.User{}
+	}
+	return users, nil
 }

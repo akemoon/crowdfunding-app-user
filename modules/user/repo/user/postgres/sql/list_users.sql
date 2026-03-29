@@ -7,4 +7,4 @@ select
     u.updated_at
 from users u
 join default_avatars da on da.id = u.default_avatar_id
-where u.id = $1;
+order by u.id;

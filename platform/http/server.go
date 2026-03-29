@@ -3,14 +3,11 @@ package http
 import (
 	"net/http"
 
-	authHandler "github.com/akemoon/crowdfunding-app-user/modules/auth/api/handler"
-	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
-	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
+	_ "github.com/akemoon/crowdfunding-app-user/docs"
 	userHandler "github.com/akemoon/crowdfunding-app-user/modules/user/api/handler"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/service/user"
 	"github.com/akemoon/golib/httplib"
-	"github.com/akemoon/golib/httplib/middleware"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Server struct {
@@ -19,31 +16,20 @@ type Server struct {
 
 func NewServer() *Server {
 	return &Server{
-		r: httplib.NewRouter().Use(
-			middleware.BaseMetrics(),
-		),
+		r: httplib.NewRouter(),
 	}
 }
 
-func (s *Server) AddAuthHandlers(svc *auth.Service, m *metrics.AuthMetrics) {
-	s.r.HandleFunc("POST /auth/signup", authHandler.SignUp(svc))
-	s.r.HandleFunc("POST /auth/signin", authHandler.SignIn(svc, m))
-	s.r.HandleFunc("POST /auth/signout", authHandler.SignOut(svc))
-	s.r.HandleFunc("GET /auth/check", authHandler.CheckAccessToken(svc))
-	s.r.HandleFunc("POST /auth/refresh", authHandler.Refresh(svc))
-}
-
 func (s *Server) AddUserHandlers(svc *user.Service) {
+	s.r.HandleFunc("POST /users", userHandler.CreateUser(svc))
+	s.r.HandleFunc("GET /users", userHandler.ListUsers(svc))
 	s.r.HandleFunc("GET /users/{id}", userHandler.GetUserByID(svc))
-	s.r.HandleFunc("GET /users/me", userHandler.GetMe(svc))
-	s.r.HandleFunc("PATCH /users/me/profile", userHandler.UpdateProfile(svc))
-
+	s.r.HandleFunc("PUT /users/{id}", userHandler.UpdateProfile(svc))
 	s.r.HandleFunc("POST /users/{id}/follow", userHandler.Follow(svc))
+	s.r.HandleFunc("GET /users/{id}/follows", userHandler.GetFollows(svc))
 	s.r.HandleFunc("DELETE /users/{id}/follow", userHandler.Unfollow(svc))
-}
 
-func (s *Server) AddMetrics() {
-	s.r.Handle("/metrics", promhttp.Handler())
+	s.r.Handle("/swagger/", httpSwagger.WrapHandler)
 }
 
 func (s *Server) ListenAndServe(addr string) error {

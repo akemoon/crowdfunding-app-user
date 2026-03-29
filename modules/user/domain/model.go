@@ -2,24 +2,39 @@ package domain
 
 import (
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
 
+// CreateUserReq — тело запроса POST /users
+type CreateUserReq struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// UpdateProfileReq — тело запроса PUT /users/:id
 type UpdateProfileReq struct {
-	Username    string `json:"username"`
 	DisplayName string `json:"displayName"`
 	Description string `json:"description"`
 }
 
+// FollowReq — тело запроса POST/DELETE /users/:id/follow
+type FollowReq struct {
+	FollowerID uuid.UUID `json:"followerId"`
+}
+
+// User — модель пользователя в ответе
 type User struct {
-	ID          uuid.UUID `json:"id"`
-	Username    string    `json:"username"`
-	DisplayName string    `json:"displayName"`
-	Description string    `json:"description"`
-	AvatarUrl   string    `json:"avatarUrl"`
+	ID          uuid.UUID  `json:"id"`
+	Username    string     `json:"username"`
+	DisplayName string     `json:"displayName"`
+	Description string     `json:"description"`
+	AvatarKey   string     `json:"avatarKey"`
+	UpdatedAt   *time.Time `json:"updatedAt"`
 }
 
 const MaxDisplayNameLength = 120
@@ -43,22 +58,11 @@ func ValidateDisplayName(displayName string) error {
 }
 
 func isAllowedDisplayNameRune(r rune) bool {
-	if r == ' ' {
-		return true
-	}
-	if unicode.Is(unicode.Latin, r) {
-		return true
-	}
-	if unicode.Is(unicode.Cyrillic, r) {
-		return true
-	}
-	if unicode.IsDigit(r) {
-		return true
-	}
-	if unicode.IsPunct(r) {
-		return true
-	}
-	return false
+	return r == ' ' ||
+		unicode.Is(unicode.Latin, r) ||
+		unicode.Is(unicode.Cyrillic, r) ||
+		unicode.IsDigit(r) ||
+		unicode.IsPunct(r)
 }
 
 const MaxDescriptionLength = 200
@@ -82,20 +86,9 @@ func ValidateDescription(description string) error {
 }
 
 func isAllowedDescriptionRune(r rune) bool {
-	if r == ' ' || r == '\n' {
-		return true
-	}
-	if unicode.Is(unicode.Latin, r) {
-		return true
-	}
-	if unicode.Is(unicode.Cyrillic, r) {
-		return true
-	}
-	if unicode.IsDigit(r) {
-		return true
-	}
-	if unicode.IsPunct(r) {
-		return true
-	}
-	return false
+	return r == ' ' || r == '\n' ||
+		unicode.Is(unicode.Latin, r) ||
+		unicode.Is(unicode.Cyrillic, r) ||
+		unicode.IsDigit(r) ||
+		unicode.IsPunct(r)
 }
