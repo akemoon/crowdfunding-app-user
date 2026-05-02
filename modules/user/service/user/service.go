@@ -64,6 +64,19 @@ func (s *Service) UpdateProfile(ctx context.Context, userID uuid.UUID, req domai
 	return user, nil
 }
 
+func (s *Service) SearchUsers(ctx context.Context, req domain.SearchUsersReq) ([]domain.User, error) {
+	users, err := s.repo.SearchUsers(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("repo: %w", err)
+	}
+
+	for i := range users {
+		users[i].AvatarUrl = s.avatarsBaseURL + "/" + users[i].AvatarUrl
+	}
+
+	return users, nil
+}
+
 func (s *Service) Follow(ctx context.Context, followerID uuid.UUID, followeeID uuid.UUID) error {
 	err := s.repo.Follow(ctx, followerID, followeeID)
 	if err != nil {

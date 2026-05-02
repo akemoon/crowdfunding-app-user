@@ -163,4 +163,35 @@ func (s *Service) Refresh(ctx context.Context, req domain.RefreshReq) (domain.Re
 	}, nil
 }
 
+func (s *Service) GetCredentialsByID(ctx context.Context, callerRole string, userID uuid.UUID) (lib.UserCredentials, error) {
+	if callerRole != domain.RoleAdmin {
+		return lib.UserCredentials{}, domain.ErrForbidden
+	}
+
+	creds, err := s.userRepo.GetCredentialsByID(ctx, userID)
+	if err != nil {
+		return lib.UserCredentials{}, fmt.Errorf("repo: %w", err)
+	}
+
+	return creds, nil
+}
+
+func (s *Service) UpdateRole(ctx context.Context, req domain.UpdateRoleReq) error {
+	if req.CallerRole != domain.RoleAdmin {
+		return domain.ErrForbidden
+	}
+
+	err := domain.ValidateRole(req.NewRole)
+	if err != nil {
+		return err
+	}
+
+	err = s.userRepo.UpdateRole(ctx, req.UserID, req.NewRole)
+	if err != nil {
+		return fmt.Errorf("repo: %w", err)
+	}
+
+	return nil
+}
+
 // TODO: block rule: delete refresh tokens from db

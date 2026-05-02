@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/akemoon/golib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/domain"
@@ -129,6 +130,35 @@ func Unfollow(svc *user.Service) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func SearchUsers(svc *user.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+
+		var query *string
+		s := q.Get("q")
+		if s != "" {
+			query = &s
+		}
+
+		limit, _ := strconv.Atoi(q.Get("limit"))
+		offset, _ := strconv.Atoi(q.Get("offset"))
+
+		users, err := svc.SearchUsers(r.Context(), domain.SearchUsersReq{
+			Query:  query,
+			Limit:  limit,
+			Offset: offset,
+		})
+		if err != nil {
+			log.Println(err)
+			status, errResp := httplib.MapErrToHTTP(err, nil)
+			httplib.WriteJSON(w, status, errResp)
+			return
+		}
+
+		httplib.WriteJSON(w, http.StatusOK, users)
 	}
 }
 

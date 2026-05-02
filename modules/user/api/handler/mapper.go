@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/akemoon/crowdfunding-app-user/lib/api"
+	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
 	"github.com/akemoon/golib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/user/domain"
 )
@@ -18,10 +19,10 @@ const (
 
 var (
 	MapRuleErrNotFound = httplib.ErrMapRule{
-		Err:     domain.ErrNotFound,
+		Err:     lib.ErrNotFound,
 		Status:  http.StatusNotFound,
 		Code:    ErrCodeNotFound,
-		Message: domain.ErrNotFound.Error(),
+		Message: lib.ErrNotFound.Error(),
 	}
 	MapRuleErrAlreadyFollowing = httplib.ErrMapRule{
 		Err:     domain.ErrAlreadyFollowing,

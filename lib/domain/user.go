@@ -15,6 +15,7 @@ var (
 	ErrInvalidEmail       = errors.New("invalid email")
 	ErrEmailExists        = errors.New("email already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrNotFound           = errors.New("not found")
 )
 
 type CreateUserReq struct {

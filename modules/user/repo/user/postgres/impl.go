@@ -115,7 +115,7 @@ func (r *UserRepo) GetCredentialsByID(ctx context.Context, id uuid.UUID) (lib.Us
 	err := r.db.QueryRowContext(ctx, getCredentialsByIDSQL, id).Scan(&c.UserID, &c.PasswordHash, &c.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return lib.UserCredentials{}, lib.ErrInvalidCredentials
+			return lib.UserCredentials{}, lib.ErrNotFound
 		}
 		return lib.UserCredentials{}, err
 	}
@@ -140,7 +140,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id uuid.UUID) (domain.User, 
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.User{}, fmt.Errorf("%w: %s", domain.ErrNotFound, err)
+			return domain.User{}, fmt.Errorf("%w: %s", lib.ErrNotFound, err)
 		}
 		return domain.User{}, err
 	}
@@ -165,7 +165,7 @@ func (r *UserRepo) UpdateProfile(ctx context.Context, userID uuid.UUID, req doma
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return domain.User{}, domain.ErrNotFound
+			return domain.User{}, lib.ErrNotFound
 		}
 		// TODO: maybe use default error like internal
 		return domain.User{}, pglib.MapConstraintErr(err, updateProfileConstraints, err)
@@ -193,5 +193,63 @@ func (r *UserRepo) Unfollow(ctx context.Context, followerID uuid.UUID, followeeI
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+//go:embed sql/search_users.sql
+var searchUsersSQL string
+
+func (r *UserRepo) SearchUsers(ctx context.Context, req domain.SearchUsersReq) ([]domain.User, error) {
+	rows, err := r.db.QueryContext(ctx, searchUsersSQL, req.Query, req.Limit, req.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.User
+
+	for rows.Next() {
+		var u domain.User
+		if err := rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.DisplayName,
+			&u.Description,
+			&u.AvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+//go:embed sql/update_role.sql
+var updateRoleSQL string
+
+func (r *UserRepo) UpdateRole(ctx context.Context, userID uuid.UUID, role string) error {
+	roleID, err := MapRoleToDB(role)
+	if err != nil {
+		return err
+	}
+
+	res, err := r.db.ExecContext(ctx, updateRoleSQL, userID, roleID)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return lib.ErrNotFound
+	}
+
 	return nil
 }

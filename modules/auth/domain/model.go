@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/google/uuid"
+
 type SignUpReq struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
@@ -27,6 +29,27 @@ type RefreshReq struct {
 type RefreshResp struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
+}
+
+const (
+	RoleUser  = "user"
+	RoleModer = "moder"
+	RoleAdmin = "admin"
+)
+
+type UpdateRoleReq struct {
+	UserID     uuid.UUID
+	NewRole    string
+	CallerRole string
+}
+
+func ValidateRole(role string) error {
+	switch role {
+	case RoleUser, RoleModer, RoleAdmin:
+		return nil
+	default:
+		return ErrInvalidRole
+	}
 }
 
 const (

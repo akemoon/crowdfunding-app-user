@@ -10,6 +10,7 @@ import (
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
+	"github.com/google/uuid"
 )
 
 const (
@@ -113,6 +114,66 @@ func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
 
 		w.Header().Set(userIDHeader, claims.UserID.String())
 		w.Header().Set(userRoleHeader, claims.Role)
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func GetCredentialsByID(svc *auth.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, err := uuid.Parse(r.PathValue("id"))
+		if err != nil {
+			http.Error(w, "invalid user id", http.StatusBadRequest)
+			return
+		}
+
+		callerRole := r.Header.Get(userRoleHeader)
+
+		creds, err := svc.GetCredentialsByID(r.Context(), callerRole, userID)
+		if err != nil {
+			log.Printf("service: %s", err)
+
+			status, resp := httplib.MapErrToHTTP(err, GetCredentialsByIDMapRules)
+			httplib.WriteJSON(w, status, resp)
+			return
+		}
+
+		httplib.WriteJSON(w, http.StatusOK, creds)
+	}
+}
+
+func UpdateRole(svc *auth.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, err := uuid.Parse(r.PathValue("id"))
+		if err != nil {
+			http.Error(w, "invalid user id", http.StatusBadRequest)
+			return
+		}
+
+		var body struct {
+			Role string `json:"role"`
+		}
+
+		err = json.NewDecoder(r.Body).Decode(&body)
+		if err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		req := domain.UpdateRoleReq{
+			UserID:     userID,
+			NewRole:    body.Role,
+			CallerRole: r.Header.Get(userRoleHeader),
+		}
+
+		err = svc.UpdateRole(r.Context(), req)
+		if err != nil {
+			log.Printf("service: %s", err)
+
+			status, resp := httplib.MapErrToHTTP(err, UpdateRoleMapRules)
+			httplib.WriteJSON(w, status, resp)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 	}
 }

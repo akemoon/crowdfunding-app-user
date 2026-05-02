@@ -12,4 +12,8 @@ var (
 	ErrInvalidRefreshToken = errors.New("invalid refresh token")
 
 	ErrInternal = errors.New("internal error")
+
+	ErrInvalidRole = errors.New("invalid role")
+
+	ErrForbidden = errors.New("forbidden")
 )

@@ -10,7 +10,8 @@ create table if not exists roles
 
 insert into roles (id, name) values
 (1, 'user'),
-(2, 'moderator');
+(2, 'moder'),
+(3, 'admin');
 
 create table if not exists credentials
 (

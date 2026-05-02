@@ -8,6 +8,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type SearchUsersReq struct {
+	Query  *string
+	Limit  int
+	Offset int
+}
+
 type UpdateProfileReq struct {
 	Username    string `json:"username"`
 	DisplayName string `json:"displayName"`

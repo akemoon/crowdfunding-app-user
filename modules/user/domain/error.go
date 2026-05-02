@@ -13,7 +13,5 @@ var (
 
 	ErrUnknownConflict = errors.New("unknown conflict")
 
-	ErrNotFound = errors.New("not found")
-
 	ErrInternal = errors.New("internal error")
 )
