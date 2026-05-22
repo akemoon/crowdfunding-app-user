@@ -31,6 +31,7 @@ func (s *Server) AddAuthHandlers(svc *auth.Service, m *metrics.AuthMetrics) {
 	s.r.HandleFunc("POST /auth/signout", authHandler.SignOut(svc))
 	s.r.HandleFunc("GET /auth/check", authHandler.CheckAccess(svc))
 	s.r.HandleFunc("POST /auth/refresh", authHandler.Refresh(svc))
+	s.r.HandleFunc("GET /auth/me", authHandler.GetMe(svc))
 	s.r.HandleFunc("GET /auth/users/{id}", authHandler.GetCredentialsByID(svc))
 	s.r.HandleFunc("PATCH /auth/users/{id}/role", authHandler.UpdateRole(svc))
 	s.r.HandleFunc("PATCH /auth/users/{id}/blocked", authHandler.SetBlocked(svc))

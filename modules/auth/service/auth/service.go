@@ -120,6 +120,18 @@ func (s *Service) SignOut(ctx context.Context, req domain.SignOutReq) error {
 	return nil
 }
 
+func (s *Service) GetMe(ctx context.Context, userID uuid.UUID) (domain.GetMeResp, error) {
+	creds, err := s.userRepo.GetCredentialsByID(ctx, userID)
+	if err != nil {
+		return domain.GetMeResp{}, fmt.Errorf("repo: %w", err)
+	}
+
+	return domain.GetMeResp{
+		Email: creds.Email,
+		Role:  creds.Role,
+	}, nil
+}
+
 func (s *Service) CheckAccess(authHeader string) (domain.TokenClaims, error) {
 	claims, err := s.tokenSvc.ValidateAccessToken(authHeader)
 	if err != nil {

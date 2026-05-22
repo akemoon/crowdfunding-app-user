@@ -178,6 +178,27 @@ func UpdateRole(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
+func GetMe(svc *auth.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, err := uuid.Parse(r.Header.Get(userIDHeader))
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		resp, err := svc.GetMe(r.Context(), userID)
+		if err != nil {
+			log.Printf("service: %s", err)
+
+			status, errResp := httplib.MapErrToHTTP(err, GetMeMapRules)
+			httplib.WriteJSON(w, status, errResp)
+			return
+		}
+
+		httplib.WriteJSON(w, http.StatusOK, resp)
+	}
+}
+
 func SetBlocked(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := uuid.Parse(r.PathValue("id"))

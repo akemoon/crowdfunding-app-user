@@ -44,6 +44,11 @@ type CredentialsResp struct {
 	IsBlocked bool      `json:"isBlocked"`
 }
 
+type GetMeResp struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
 type UpdateRoleReq struct {
 	UserID     uuid.UUID
 	NewRole    string

@@ -97,6 +97,15 @@ var (
 		},
 	}
 
+	GetMeMapRules = []httplib.ErrMapRule{
+		{
+			Err:     lib.ErrNotFound,
+			Status:  http.StatusNotFound,
+			Code:    ErrCodeNotFound,
+			Message: lib.ErrNotFound.Error(),
+		},
+	}
+
 	SetBlockedMapRules = []httplib.ErrMapRule{
 		{
 			Err:     domain.ErrForbidden,
