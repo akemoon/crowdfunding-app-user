@@ -71,12 +71,12 @@ func (r *UserRepo) CreateUser(ctx context.Context, req lib.CreateUserReq) (uuid.
 
 	var userID uuid.UUID
 
-	err = t.QueryRowContext(ctx, createCredentialsSQL, req.Email, req.PasswordHash).Scan(&userID)
+	err = t.QueryRowContext(ctx, createUserSQL, req.Username).Scan(&userID)
 	if err != nil {
 		return uuid.UUID{}, pglib.MapConstraintErr(err, createUserConstraints, err)
 	}
 
-	_, err = t.ExecContext(ctx, createUserSQL, userID, req.Username)
+	_, err = t.ExecContext(ctx, createCredentialsSQL, userID, req.Email, req.PasswordHash)
 	if err != nil {
 		return uuid.UUID{}, pglib.MapConstraintErr(err, createUserConstraints, err)
 	}
@@ -95,7 +95,7 @@ var getCredentialsByEmailSQL string
 func (r *UserRepo) GetCredentialsByEmail(ctx context.Context, email string) (lib.UserCredentials, error) {
 	var c lib.UserCredentials
 
-	err := r.db.QueryRowContext(ctx, getCredentialsByEmailSQL, email).Scan(&c.UserID, &c.PasswordHash, &c.Role)
+	err := r.db.QueryRowContext(ctx, getCredentialsByEmailSQL, email).Scan(&c.UserID, &c.PasswordHash, &c.Role, &c.IsBlocked)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return lib.UserCredentials{}, lib.ErrInvalidCredentials
@@ -112,7 +112,7 @@ var getCredentialsByIDSQL string
 func (r *UserRepo) GetCredentialsByID(ctx context.Context, id uuid.UUID) (lib.UserCredentials, error) {
 	var c lib.UserCredentials
 
-	err := r.db.QueryRowContext(ctx, getCredentialsByIDSQL, id).Scan(&c.UserID, &c.PasswordHash, &c.Role)
+	err := r.db.QueryRowContext(ctx, getCredentialsByIDSQL, id).Scan(&c.UserID, &c.Email, &c.PasswordHash, &c.Role, &c.IsBlocked)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return lib.UserCredentials{}, lib.ErrNotFound
@@ -137,6 +137,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id uuid.UUID) (domain.User, 
 		&u.DisplayName,
 		&u.Description,
 		&u.AvatarUrl,
+		&u.FollowersCount,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -162,6 +163,7 @@ func (r *UserRepo) UpdateProfile(ctx context.Context, userID uuid.UUID, req doma
 		&u.DisplayName,
 		&u.Description,
 		&u.AvatarUrl,
+		&u.FollowersCount,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -193,6 +195,26 @@ func (r *UserRepo) Unfollow(ctx context.Context, followerID uuid.UUID, followeeI
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+//go:embed sql/set_blocked.sql
+var setBlockedSQL string
+
+func (r *UserRepo) SetBlocked(ctx context.Context, userID uuid.UUID, blocked bool) error {
+	res, err := r.db.ExecContext(ctx, setBlockedSQL, userID, blocked)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return lib.ErrNotFound
+	}
+
 	return nil
 }
 

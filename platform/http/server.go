@@ -29,10 +29,11 @@ func (s *Server) AddAuthHandlers(svc *auth.Service, m *metrics.AuthMetrics) {
 	s.r.HandleFunc("POST /auth/signup", authHandler.SignUp(svc))
 	s.r.HandleFunc("POST /auth/signin", authHandler.SignIn(svc, m))
 	s.r.HandleFunc("POST /auth/signout", authHandler.SignOut(svc))
-	s.r.HandleFunc("GET /auth/check", authHandler.CheckAccessToken(svc))
+	s.r.HandleFunc("GET /auth/check", authHandler.CheckAccess(svc))
 	s.r.HandleFunc("POST /auth/refresh", authHandler.Refresh(svc))
 	s.r.HandleFunc("GET /auth/users/{id}", authHandler.GetCredentialsByID(svc))
 	s.r.HandleFunc("PATCH /auth/users/{id}/role", authHandler.UpdateRole(svc))
+	s.r.HandleFunc("PATCH /auth/users/{id}/blocked", authHandler.SetBlocked(svc))
 }
 
 func (s *Server) AddUserHandlers(svc *user.Service) {

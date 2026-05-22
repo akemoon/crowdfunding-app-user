@@ -85,6 +85,10 @@ func (s *Service) SignIn(ctx context.Context, req domain.SignInReq) (domain.Sign
 		return domain.SignInResp{}, lib.ErrInvalidCredentials
 	}
 
+	if creds.IsBlocked {
+		return domain.SignInResp{}, domain.ErrUserBlocked
+	}
+
 	claims := domain.TokenClaims{UserID: creds.UserID, Role: creds.Role}
 
 	accessToken, err := s.tokenSvc.GenerateAccessToken(claims)
@@ -116,8 +120,8 @@ func (s *Service) SignOut(ctx context.Context, req domain.SignOutReq) error {
 	return nil
 }
 
-func (s *Service) ValidateAccessToken(token string) (domain.TokenClaims, error) {
-	claims, err := s.tokenSvc.ValidateAccessToken(token)
+func (s *Service) CheckAccess(authHeader string) (domain.TokenClaims, error) {
+	claims, err := s.tokenSvc.ValidateAccessToken(authHeader)
 	if err != nil {
 		return domain.TokenClaims{}, err
 	}
@@ -163,17 +167,22 @@ func (s *Service) Refresh(ctx context.Context, req domain.RefreshReq) (domain.Re
 	}, nil
 }
 
-func (s *Service) GetCredentialsByID(ctx context.Context, callerRole string, userID uuid.UUID) (lib.UserCredentials, error) {
+func (s *Service) GetCredentialsByID(ctx context.Context, callerRole string, userID uuid.UUID) (domain.CredentialsResp, error) {
 	if callerRole != domain.RoleAdmin {
-		return lib.UserCredentials{}, domain.ErrForbidden
+		return domain.CredentialsResp{}, domain.ErrForbidden
 	}
 
 	creds, err := s.userRepo.GetCredentialsByID(ctx, userID)
 	if err != nil {
-		return lib.UserCredentials{}, fmt.Errorf("repo: %w", err)
+		return domain.CredentialsResp{}, fmt.Errorf("repo: %w", err)
 	}
 
-	return creds, nil
+	return domain.CredentialsResp{
+		UserID:    creds.UserID,
+		Email:     creds.Email,
+		Role:      creds.Role,
+		IsBlocked: creds.IsBlocked,
+	}, nil
 }
 
 func (s *Service) UpdateRole(ctx context.Context, req domain.UpdateRoleReq) error {
@@ -194,4 +203,22 @@ func (s *Service) UpdateRole(ctx context.Context, req domain.UpdateRoleReq) erro
 	return nil
 }
 
-// TODO: block rule: delete refresh tokens from db
+func (s *Service) SetBlocked(ctx context.Context, callerRole string, userID uuid.UUID, blocked bool) error {
+	if callerRole != domain.RoleAdmin {
+		return domain.ErrForbidden
+	}
+
+	err := s.userRepo.SetBlocked(ctx, userID, blocked)
+	if err != nil {
+		return fmt.Errorf("repo: %w", err)
+	}
+
+	if blocked {
+		err = s.tokenSvc.DeleteAllRefreshTokensByUserID(ctx, userID)
+		if err != nil {
+			return fmt.Errorf("token service: %w", err)
+		}
+	}
+
+	return nil
+}

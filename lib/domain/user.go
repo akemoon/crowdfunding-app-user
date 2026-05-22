@@ -26,8 +26,10 @@ type CreateUserReq struct {
 
 type UserCredentials struct {
 	UserID       uuid.UUID
+	Email        string
 	PasswordHash string
 	Role         string
+	IsBlocked    bool
 }
 
 const (

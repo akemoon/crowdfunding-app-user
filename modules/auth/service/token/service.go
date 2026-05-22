@@ -88,6 +88,15 @@ func (s *Service) DeleteRefreshToken(ctx context.Context, tok string) error {
 	return nil
 }
 
+func (s *Service) DeleteAllRefreshTokensByUserID(ctx context.Context, userID uuid.UUID) error {
+	err := s.refreshTokenRepo.DeleteAllByUserID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("token repo: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) ValidateAccessToken(tok string) (domain.TokenClaims, error) {
 	parts := strings.Fields(tok)
 	if len(parts) != 2 || parts[0] != "Bearer" {

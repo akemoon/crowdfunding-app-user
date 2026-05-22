@@ -21,11 +21,12 @@ type UpdateProfileReq struct {
 }
 
 type User struct {
-	ID          uuid.UUID `json:"id"`
-	Username    string    `json:"username"`
-	DisplayName string    `json:"displayName"`
-	Description string    `json:"description"`
-	AvatarUrl   string    `json:"avatarUrl"`
+	ID             uuid.UUID `json:"id"`
+	Username       string    `json:"username"`
+	DisplayName    string    `json:"displayName"`
+	Description    string    `json:"description"`
+	AvatarUrl      string    `json:"avatarUrl"`
+	FollowersCount int       `json:"followersCount"`
 }
 
 const MaxDisplayNameLength = 120

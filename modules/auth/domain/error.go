@@ -16,4 +16,6 @@ var (
 	ErrInvalidRole = errors.New("invalid role")
 
 	ErrForbidden = errors.New("forbidden")
+
+	ErrUserBlocked = errors.New("user is blocked")
 )

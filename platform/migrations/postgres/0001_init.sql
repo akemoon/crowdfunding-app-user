@@ -13,19 +13,6 @@ insert into roles (id, name) values
 (2, 'moder'),
 (3, 'admin');
 
-create table if not exists credentials
-(
-    user_id       uuid primary key default uuidv7(),
-    email         text not null,
-    password_hash text not null,
-    role_id       smallint not null default 1,
-    created_at    timestamptz not null default now(),
-    -- TODO: is blocked
-
-    constraint credentials_email_unique unique (email),
-    constraint credentials_role_fk foreign key (role_id) references roles(id)
-);
-
 create table if not exists default_avatars
 (
     id  smallserial primary key,
@@ -44,13 +31,14 @@ insert into default_avatars (key) values
 
 create table if not exists users
 (
-    id                uuid primary key,
+    id                uuid primary key default uuidv7(),
     username          text not null,
     display_name      text,
     description       text,
     avatar_key        text,
     default_avatar_id smallint not null,
     created_at        timestamptz not null default now(),
+    updated_at        timestamptz not null default now(),
 
     constraint users_username_unique unique (username),
     constraint users_default_avatar_fk foreign key (default_avatar_id) references default_avatars(id)
@@ -75,6 +63,41 @@ create trigger trigger_assign_default_avatar
     for each row
     execute function assign_default_avatar();
 
+-- +goose StatementBegin
+create or replace function set_updated_at()
+returns trigger as $$
+begin
+    new.updated_at = now();
+    return new;
+end;
+$$ language plpgsql;
+-- +goose StatementEnd
+
+create trigger trigger_users_updated_at
+    before update on users
+    for each row
+    execute function set_updated_at();
+
+create table if not exists credentials
+(
+    user_id       uuid primary key,
+    email         text not null,
+    password_hash text not null,
+    role_id       smallint not null default 1,
+    is_blocked    boolean not null default false,
+    created_at    timestamptz not null default now(),
+    updated_at    timestamptz not null default now(),
+
+    constraint credentials_email_unique unique (email),
+    constraint credentials_role_fk foreign key (role_id) references roles(id),
+    constraint credentials_user_fk foreign key (user_id) references users(id)
+);
+
+create trigger trigger_credentials_updated_at
+    before update on credentials
+    for each row
+    execute function set_updated_at();
+
 create table if not exists follows
 (
     follower_id uuid,
@@ -90,9 +113,12 @@ create table if not exists follows
 -- +goose Down
 
 drop table if exists follows;
+drop trigger if exists trigger_credentials_updated_at on credentials;
+drop table if exists credentials;
+drop trigger if exists trigger_users_updated_at on users;
 drop trigger if exists trigger_assign_default_avatar on users;
+drop function if exists set_updated_at;
 drop function if exists assign_default_avatar;
 drop table if exists users;
 drop table if exists default_avatars;
-drop table if exists credentials;
 drop table if exists roles;

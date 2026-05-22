@@ -37,6 +37,13 @@ const (
 	RoleAdmin = "admin"
 )
 
+type CredentialsResp struct {
+	UserID    uuid.UUID `json:"userID"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	IsBlocked bool      `json:"isBlocked"`
+}
+
 type UpdateRoleReq struct {
 	UserID     uuid.UUID
 	NewRole    string

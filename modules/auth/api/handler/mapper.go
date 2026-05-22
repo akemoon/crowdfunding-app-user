@@ -15,6 +15,7 @@ const (
 	ErrCodeInvalidRole         = "invalid_role"
 	ErrCodeForbidden           = "forbidden"
 	ErrCodeNotFound            = "not_found"
+	ErrCodeUserBlocked         = "user_blocked"
 )
 
 var (
@@ -25,6 +26,12 @@ var (
 
 	SignInMapRules = []httplib.ErrMapRule{
 		api.MapRuleErrInvalidCredentials,
+		{
+			Err:     domain.ErrUserBlocked,
+			Status:  http.StatusForbidden,
+			Code:    ErrCodeUserBlocked,
+			Message: domain.ErrUserBlocked.Error(),
+		},
 	}
 
 	SignOutMapRules = []httplib.ErrMapRule{
@@ -87,6 +94,21 @@ var (
 			Status:  http.StatusBadRequest,
 			Code:    ErrCodeInvalidRole,
 			Message: domain.ErrInvalidRole.Error(),
+		},
+	}
+
+	SetBlockedMapRules = []httplib.ErrMapRule{
+		{
+			Err:     domain.ErrForbidden,
+			Status:  http.StatusForbidden,
+			Code:    ErrCodeForbidden,
+			Message: domain.ErrForbidden.Error(),
+		},
+		{
+			Err:     lib.ErrNotFound,
+			Status:  http.StatusNotFound,
+			Code:    ErrCodeNotFound,
+			Message: lib.ErrNotFound.Error(),
 		},
 	}
 )

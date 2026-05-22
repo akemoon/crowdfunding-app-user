@@ -12,4 +12,5 @@ type Repo interface {
 	GetCredentialsByEmail(ctx context.Context, email string) (domain.UserCredentials, error)
 	GetCredentialsByID(ctx context.Context, id uuid.UUID) (domain.UserCredentials, error)
 	UpdateRole(ctx context.Context, userID uuid.UUID, role string) error
+	SetBlocked(ctx context.Context, userID uuid.UUID, blocked bool) error
 }

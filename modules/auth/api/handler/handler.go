@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/akemoon/golib/httplib"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
+	"github.com/akemoon/golib/httplib"
 	"github.com/google/uuid"
 )
 
@@ -90,7 +90,7 @@ func SignOut(svc *auth.Service) http.HandlerFunc {
 	}
 }
 
-func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
+func CheckAccess(svc *auth.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		optional := r.URL.Query().Get("optional") == "true"
 
@@ -104,7 +104,7 @@ func CheckAccessToken(svc *auth.Service) http.HandlerFunc {
 			return
 		}
 
-		claims, err := svc.ValidateAccessToken(authHeader)
+		claims, err := svc.CheckAccess(authHeader)
 		if err != nil {
 			log.Printf("token service: %s", err)
 			status, resp := httplib.MapErrToHTTP(err, CheckMapRules)
@@ -170,6 +170,39 @@ func UpdateRole(svc *auth.Service) http.HandlerFunc {
 			log.Printf("service: %s", err)
 
 			status, resp := httplib.MapErrToHTTP(err, UpdateRoleMapRules)
+			httplib.WriteJSON(w, status, resp)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func SetBlocked(svc *auth.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, err := uuid.Parse(r.PathValue("id"))
+		if err != nil {
+			http.Error(w, "invalid user id", http.StatusBadRequest)
+			return
+		}
+
+		var body struct {
+			Blocked bool `json:"blocked"`
+		}
+
+		err = json.NewDecoder(r.Body).Decode(&body)
+		if err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		callerRole := r.Header.Get(userRoleHeader)
+
+		err = svc.SetBlocked(r.Context(), callerRole, userID, body.Blocked)
+		if err != nil {
+			log.Printf("service: %s", err)
+
+			status, resp := httplib.MapErrToHTTP(err, SetBlockedMapRules)
 			httplib.WriteJSON(w, status, resp)
 			return
 		}
