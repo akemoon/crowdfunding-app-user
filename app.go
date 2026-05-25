@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/metrics"
-	tokenRepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/token/redis"
+	refreshRepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/refresh/redis"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/auth"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher/bcrypt"
@@ -88,8 +88,8 @@ func (a *App) InitServices() error {
 
 	repo := postgres.NewUserRepo(a.db)
 
-	tokenRepo := tokenRepo.NewRefreshTokenRepo(a.redisClient)
-	tokenSvc := token.NewService(tokenRepo, a.config.JWTSecret)
+	refreshRepo := refreshRepo.NewRefreshRepo(a.redisClient)
+	tokenSvc := token.NewService(refreshRepo, a.config.JWTSecret)
 
 	hasher := bcrypt.NewHasher(10)
 

@@ -8,17 +8,17 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RefreshTokenRepo struct {
+type RefreshRepo struct {
 	redisClient *redis.Client
 }
 
-func NewRefreshTokenRepo(rc *redis.Client) *RefreshTokenRepo {
-	return &RefreshTokenRepo{
+func NewRefreshRepo(rc *redis.Client) *RefreshRepo {
+	return &RefreshRepo{
 		redisClient: rc,
 	}
 }
 
-func (r *RefreshTokenRepo) Set(ctx context.Context, hash string, userID uuid.UUID, ttl time.Duration) error {
+func (r *RefreshRepo) Set(ctx context.Context, hash string, userID uuid.UUID, ttl time.Duration) error {
 	setKey := r.userSetKey(userID.String())
 	pipe := r.redisClient.Pipeline()
 	pipe.Set(ctx, hash, userID.String(), ttl)
@@ -28,7 +28,7 @@ func (r *RefreshTokenRepo) Set(ctx context.Context, hash string, userID uuid.UUI
 	return err
 }
 
-func (r *RefreshTokenRepo) Get(ctx context.Context, hash string) (uuid.UUID, error) {
+func (r *RefreshRepo) Get(ctx context.Context, hash string) (uuid.UUID, error) {
 	val, err := r.redisClient.Get(ctx, hash).Result()
 	if err != nil {
 		return uuid.UUID{}, err
@@ -37,7 +37,7 @@ func (r *RefreshTokenRepo) Get(ctx context.Context, hash string) (uuid.UUID, err
 	return uuid.Parse(val)
 }
 
-func (r *RefreshTokenRepo) Delete(ctx context.Context, hash string) error {
+func (r *RefreshRepo) Delete(ctx context.Context, hash string) error {
 	userIDStr, err := r.redisClient.Get(ctx, hash).Result()
 	if err != nil {
 		return r.redisClient.Del(ctx, hash).Err()
@@ -50,7 +50,7 @@ func (r *RefreshTokenRepo) Delete(ctx context.Context, hash string) error {
 	return err
 }
 
-func (r *RefreshTokenRepo) DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error {
+func (r *RefreshRepo) DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error {
 	setKey := r.userSetKey(userID.String())
 
 	hashes, err := r.redisClient.SMembers(ctx, setKey).Result()
@@ -62,6 +62,6 @@ func (r *RefreshTokenRepo) DeleteAllByUserID(ctx context.Context, userID uuid.UU
 	return r.redisClient.Del(ctx, keys...).Err()
 }
 
-func (r *RefreshTokenRepo) userSetKey(userID string) string {
+func (r *RefreshRepo) userSetKey(userID string) string {
 	return "user:" + userID + ":tokens"
 }

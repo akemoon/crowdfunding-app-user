@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
-	"github.com/akemoon/crowdfunding-app-user/modules/auth/repo/token"
+	"github.com/akemoon/crowdfunding-app-user/modules/auth/repo/refresh"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -21,14 +21,14 @@ const (
 )
 
 type Service struct {
-	refreshTokenRepo token.Repo
-	secret           string
+	refreshRepo refresh.Repo
+	secret      string
 }
 
-func NewService(r token.Repo, s string) *Service {
+func NewService(r refresh.Repo, s string) *Service {
 	return &Service{
-		refreshTokenRepo: r,
-		secret:           s,
+		refreshRepo: r,
+		secret:      s,
 	}
 }
 
@@ -58,7 +58,7 @@ func (s *Service) GenerateRefreshToken(ctx context.Context, userID uuid.UUID) (s
 	tok := hex.EncodeToString(raw)
 	hash := sha256hex(tok)
 
-	err = s.refreshTokenRepo.Set(ctx, hash, userID, refreshTokenLifeTime)
+	err = s.refreshRepo.Set(ctx, hash, userID, refreshTokenLifeTime)
 	if err != nil {
 		return "", fmt.Errorf("token repo: %w", err)
 	}
@@ -69,7 +69,7 @@ func (s *Service) GenerateRefreshToken(ctx context.Context, userID uuid.UUID) (s
 func (s *Service) ValidateRefreshToken(ctx context.Context, tok string) (uuid.UUID, error) {
 	hash := sha256hex(tok)
 
-	userID, err := s.refreshTokenRepo.Get(ctx, hash)
+	userID, err := s.refreshRepo.Get(ctx, hash)
 	if err != nil {
 		return uuid.UUID{}, domain.ErrInvalidRefreshToken
 	}
@@ -80,7 +80,7 @@ func (s *Service) ValidateRefreshToken(ctx context.Context, tok string) (uuid.UU
 func (s *Service) DeleteRefreshToken(ctx context.Context, tok string) error {
 	hash := sha256hex(tok)
 
-	err := s.refreshTokenRepo.Delete(ctx, hash)
+	err := s.refreshRepo.Delete(ctx, hash)
 	if err != nil {
 		return fmt.Errorf("token repo: %w", err)
 	}
@@ -89,7 +89,7 @@ func (s *Service) DeleteRefreshToken(ctx context.Context, tok string) error {
 }
 
 func (s *Service) DeleteAllRefreshTokensByUserID(ctx context.Context, userID uuid.UUID) error {
-	err := s.refreshTokenRepo.DeleteAllByUserID(ctx, userID)
+	err := s.refreshRepo.DeleteAllByUserID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("token repo: %w", err)
 	}

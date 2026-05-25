@@ -162,6 +162,22 @@ func SearchUsers(svc *user.Service) http.HandlerFunc {
 	}
 }
 
-// TODO: implement subscriptions
-// GET /me/subscriptions
-// GET /users/{id}/subscriptions
+func GetMeSubscriptions(svc *user.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := httplib.ParseUUIDHeader(r, userIDHeader)
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		users, err := svc.GetSubscriptions(r.Context(), id)
+		if err != nil {
+			log.Println(err)
+			status, errResp := httplib.MapErrToHTTP(err, nil)
+			httplib.WriteJSON(w, status, errResp)
+			return
+		}
+
+		httplib.WriteJSON(w, http.StatusOK, users)
+	}
+}

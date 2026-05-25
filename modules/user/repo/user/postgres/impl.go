@@ -251,6 +251,39 @@ func (r *UserRepo) SearchUsers(ctx context.Context, req domain.SearchUsersReq) (
 	return out, nil
 }
 
+//go:embed sql/get_subscriptions.sql
+var getSubscriptionsSQL string
+
+func (r *UserRepo) GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]domain.User, error) {
+	rows, err := r.db.QueryContext(ctx, getSubscriptionsSQL, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.User
+
+	for rows.Next() {
+		var u domain.User
+		if err := rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.DisplayName,
+			&u.Description,
+			&u.AvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
 //go:embed sql/update_role.sql
 var updateRoleSQL string
 

@@ -92,3 +92,16 @@ func (s *Service) Unfollow(ctx context.Context, followerID uuid.UUID, followeeID
 	}
 	return nil
 }
+
+func (s *Service) GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]domain.User, error) {
+	users, err := s.repo.GetSubscriptions(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("repo: %w", err)
+	}
+
+	for i := range users {
+		users[i].AvatarUrl = s.avatarsBaseURL + "/" + users[i].AvatarUrl
+	}
+
+	return users, nil
+}

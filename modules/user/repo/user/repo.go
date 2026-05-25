@@ -15,4 +15,5 @@ type Repo interface {
 	Follow(ctx context.Context, followerID uuid.UUID, followeeID uuid.UUID) error
 	Unfollow(ctx context.Context, followerID uuid.UUID, followeeID uuid.UUID) error
 	SearchUsers(ctx context.Context, req domain.SearchUsersReq) ([]domain.User, error)
+	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]domain.User, error)
 }

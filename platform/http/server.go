@@ -45,6 +45,7 @@ func (s *Server) AddUserHandlers(svc *user.Service) {
 
 	s.r.HandleFunc("POST /users/{id}/follow", userHandler.Follow(svc))
 	s.r.HandleFunc("DELETE /users/{id}/follow", userHandler.Unfollow(svc))
+	s.r.HandleFunc("GET /users/me/subscriptions", userHandler.GetMeSubscriptions(svc))
 }
 
 func (s *Server) AddMetrics() {
