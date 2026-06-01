@@ -7,7 +7,7 @@ import (
 
 	lib "github.com/akemoon/crowdfunding-app-user/lib/domain"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/domain"
-	"github.com/akemoon/crowdfunding-app-user/modules/auth/repo/user"
+	authrepo "github.com/akemoon/crowdfunding-app-user/modules/auth/repo/auth"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/service/token"
 	"github.com/akemoon/crowdfunding-app-user/modules/auth/tool/hasher"
 	userPublisher "github.com/akemoon/crowdfunding-app-user/platform/publisher/user"
@@ -16,13 +16,13 @@ import (
 )
 
 type Service struct {
-	userRepo  user.Repo
+	userRepo  authrepo.Repo
 	hasher    hasher.Hasher
 	tokenSvc  *token.Service // TODO: interface
 	publisher *userPublisher.Publisher
 }
 
-func NewService(r user.Repo, h hasher.Hasher, t *token.Service, p *userPublisher.Publisher) *Service {
+func NewService(r authrepo.Repo, h hasher.Hasher, t *token.Service, p *userPublisher.Publisher) *Service {
 	return &Service{
 		userRepo:  r,
 		hasher:    h,
